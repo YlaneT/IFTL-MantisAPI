@@ -26,6 +26,24 @@
             <artifactId>selenium-api</artifactId>
             <version>4.10.0</version>
         </dependency>
-    </dependencies>
 
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>6.0.9</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-oxm</artifactId>
+            <version>6.0.6</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.28</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 </project>
