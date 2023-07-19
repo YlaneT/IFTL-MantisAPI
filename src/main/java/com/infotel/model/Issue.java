@@ -33,4 +33,12 @@ public class Issue {
     public Issue () {
         tags = new ArrayList<>();
     }
+    
+    public void setSummary (String summary) {
+        String summaryStart = this.id + ": ";
+        if (summary.startsWith(summaryStart)) {
+             summary = summary.substring(summaryStart.length());
+        }
+        this.summary = summary;
+    }
 }
