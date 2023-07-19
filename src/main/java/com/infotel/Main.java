@@ -6,8 +6,17 @@ import com.infotel.service.IssuesServiceImpl;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class Main {
     public static void main (String[] args) {
+        SpringApplication.run(Main.class, args);
+    }
+    
+    private static void actions () {
+        
         IssuesServiceImpl service = new IssuesServiceImpl();
         
         List<Issue> issues = new ArrayList<>();

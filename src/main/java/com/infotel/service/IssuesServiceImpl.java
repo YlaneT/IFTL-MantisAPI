@@ -31,6 +31,7 @@ public class IssuesServiceImpl implements IssuesService {
         WebDriver driver = login();
         Issue      issue     = new Issue();
         
+        // FIXME? use url : http://localhost/mantisbt/view.php?id=1
         driver.findElement(By.name("bug_id")).sendKeys(String.valueOf(id));
         driver.findElement(By.xpath("//input[@value='Jump']")).click();
         

@@ -1,15 +1,17 @@
 package com.infotel.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
-@Setter
+@Data
+@Entity
 public class Issue {
+    @Id
+    @GeneratedValue
     private String        id;
     private String        project;
     private String        category;
@@ -27,9 +29,9 @@ public class Issue {
     // Optional fields /!\ appear before tags
     private String        stepsToReproduce;
     private String        additionalInformation;
-    
-    
     // TODO: Custom fields
+    
+    
     public Issue () {
         tags = new ArrayList<>();
     }
