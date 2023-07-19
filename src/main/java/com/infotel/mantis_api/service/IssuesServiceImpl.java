@@ -26,6 +26,16 @@ public class IssuesServiceImpl implements IssuesService {
         return driver;
     }
     
+    /* Issue particularities
+     * Issue 1 : Status acknowledged
+     * Issue 2 : Contains Steps to reproduce
+     * Issue 3 : Contains Tags / Attached file
+     * Issue 4 : Contains custom field ("custom field numero 1")
+     * Issue 5 : Minimal & unassigned
+     * Issue 6 : Contains Steps to reproduce / Additional information
+     * Issue 7 : Maximal
+     */
+    
     @Override
     public Issue searchIssue (int id) {
         WebDriver driver = login();
