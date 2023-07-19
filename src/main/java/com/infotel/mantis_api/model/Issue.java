@@ -1,4 +1,4 @@
-package com.infotel.model;
+package com.infotel.mantis_api.model;
 
 import lombok.*;
 

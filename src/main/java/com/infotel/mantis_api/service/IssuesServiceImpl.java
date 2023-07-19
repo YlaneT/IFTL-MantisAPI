@@ -1,6 +1,6 @@
-package com.infotel.service;
+package com.infotel.mantis_api.service;
 
-import com.infotel.model.Issue;
+import com.infotel.mantis_api.model.Issue;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 
