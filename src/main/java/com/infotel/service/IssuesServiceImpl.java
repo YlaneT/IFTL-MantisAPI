@@ -13,6 +13,7 @@ public class IssuesServiceImpl implements IssuesService {
     public static WebDriver login ()  {
         WebDriver driver = new ChromeDriver();
         driver.get("http://localhost/mantisbt/login_page.php");
+        
         try {
             Thread.sleep(1500);
         } catch (InterruptedException e) {
@@ -94,7 +95,23 @@ public class IssuesServiceImpl implements IssuesService {
             }
         }
         
+        try {
+            WebElement strTitle = driver.findElement(By.xpath("//td[text()='Steps To Reproduce']"));
+            WebElement strElement = strTitle.findElement(By.xpath("./following-sibling::td"));
+            String stepsToReproduce = strElement.getText();
+            issue.setStepsToReproduce(stepsToReproduce);
+        } catch (NoSuchElementException e) {
+            System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
+        }
         
+        try {
+            WebElement aiTitle = driver.findElement(By.xpath("//td[text()='Additional Information']"));
+            WebElement strElement = aiTitle.findElement(By.xpath("./following-sibling::td"));
+            String stepsToReproduce = strElement.getText();
+            issue.setAdditionalInformation(stepsToReproduce);
+        } catch (NoSuchElementException e) {
+            System.err.println(e.getClass().getSimpleName() + " : No additional information.");
+        }
         
         driver.quit();
         return issue;

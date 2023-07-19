@@ -17,7 +17,7 @@ public class Main {
         issues.add(service.searchIssue(3)); // Tags
         issues.add(service.searchIssue(4)); // Custom field / Priority none
         issues.add(service.searchIssue(5)); // minimal & unassigned
-        issues.add(service.searchIssue(6)); // private & unassigned
+        issues.add(service.searchIssue(6)); // private & unassigned / steps to reproduce & additional information
         issues.add(service.searchIssue(7)); // maximal
     }
 }

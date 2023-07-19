@@ -24,9 +24,10 @@ public class Issue {
     private String        summary;
     private String        description;
     private List<String>  tags; // id, name, description
-    // TODO: Champs pas obligatoires /!\ apparaissent avant les tags
-    //  - steps to reproduce
-    //  - additional information
+    // Optional fields /!\ appear before tags
+    private String        stepsToReproduce;
+    private String        additionalInformation;
+    
     
     // TODO: Custom fields
     public Issue () {
