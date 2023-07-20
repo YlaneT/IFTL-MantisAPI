@@ -1,5 +1,6 @@
-package com.infotel;
+package com.infotel.mantis_api.service;
 
+import com.infotel.mantis_api.model.IssueDto;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;

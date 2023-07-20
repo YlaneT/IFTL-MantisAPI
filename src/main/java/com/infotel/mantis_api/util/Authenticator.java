@@ -1,4 +1,4 @@
-package com.infotel;
+package com.infotel.mantis_api.util;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;

@@ -1,4 +1,4 @@
-package com.infotel;
+package com.infotel.mantis_api.model;
 
 import lombok.Getter;
 import lombok.Setter;
