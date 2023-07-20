@@ -6,10 +6,13 @@ import com.infotel.mantis_api.model.IssueRecap;
 import java.util.List;
 
 public interface IssuesService {
+    // Get an issue
     Issue searchIssue (int id);
-    List<Issue> searchAllIssues (int pageSize, int page, List<String> select, int projectId, String filterId);
-
-    List<IssueRecap> searchAllIssues();
-
-    List<IssueRecap> searchAllIssues(int pageSize, int page);
+    
+    Issue searchIssue (int id, List<String> selectValues);
+    
+    // Get all issues
+    List<IssueRecap> searchAllIssues ();
+    
+    List<IssueRecap> searchAllIssues (int pageSize, int page);
 }

@@ -64,8 +64,73 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public List<Issue> searchAllIssues (int pageSize, int page, List<String> select, int projectId, String filterId) {
-        return null;
+    public Issue searchIssue (int id, List<String> selectValues) {
+        WebDriver driver = Authenticator.login();
+        Issue     issue  = new Issue();
+        
+        // FIXME? use url : http://localhost/mantisbt/view.php?id=1
+        driver.findElement(By.name("bug_id")).sendKeys(String.valueOf(id));
+        driver.findElement(By.xpath("//input[@value='Jump']")).click();
+        
+        for(String selected : selectValues) {
+            switch (selected.toLowerCase()) {
+                case "id":
+                    issue.setId(extractId(driver));
+                    break;
+                case "project":
+                    issue.setProject(extractProject(driver));
+                    break;
+                case "category":
+                    issue.setCategory(extractCategory(driver));
+                    break;
+                case "view status":
+                    
+                    break;
+                case "submitted":
+                    issue.setSubmitted(extractSubmitted(driver));
+                    break;
+                case "updated":
+                    issue.setLastUpdated(extractUpdated(driver));
+                    break;
+                case "reporter":
+                    issue.setReporter(extractReporter(driver));
+                    break;
+                case "assigned":
+                    issue.setAssigned(extractAssigned(driver));
+                    break;
+                case "priority":
+                    issue.setPriority(extractPriority(driver));
+                    break;
+                case "status":
+                    issue.setStatus(extractStatus(driver));
+                    break;
+                case "severity":
+                    issue.setSeverity(extractSeverity(driver));
+                    break;
+                case "reproducibility":
+                    issue.setReproducibility(extractReproducibility(driver));
+                    break;
+                case "summary":
+                    issue.setSummary(extractSummary(driver));
+                    break;
+                case "description":
+                    issue.setDescription(extractDescription(driver));
+                    break;
+                case "tags":
+                    issue.setTags(extractTags(driver));
+                    break;
+                case "steps":
+                    
+                    break;
+                case "additional info":
+                    
+                    break;
+                default:
+                    // TODO: Throw exception Issue field not found
+                    break;
+            }
+        }
+        return issue;
     }
     
     public List<IssueRecap> searchAllIssues () {
