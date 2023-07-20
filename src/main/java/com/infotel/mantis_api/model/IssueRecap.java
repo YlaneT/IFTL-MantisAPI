@@ -6,7 +6,7 @@ import lombok.Setter;
 import java.time.LocalDate;
 
 @Getter @Setter
-public class IssueDto {
+public class IssueRecap {
     private String id;
     private String priority;
     private int attachmentCount;
