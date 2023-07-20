@@ -252,11 +252,11 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     private List<String> extractTags (WebDriver driver) {
-        WebElement   tagsCategoryElement = driver.findElement(By.xpath("//td[text()='Tags' and @class='category']"));
-        List<String> tags                = new ArrayList<>();
-        if (!tagsCategoryElement.getText().equals("No tags attached.")) {
-            // Find immediate sibling of Tags header
-            WebElement tagsValueElement = tagsCategoryElement.findElement(By.xpath("./following-sibling::td"));
+        WebElement tagsCategoryElement = driver.findElement(By.xpath("//td[text()='Tags' and @class='category']"));
+        // Find immediate sibling of Tags header
+        WebElement   tagsValueElement = tagsCategoryElement.findElement(By.xpath("./following-sibling::td"));
+        List<String> tags             = new ArrayList<>();
+        if (!tagsValueElement.getText().equals("No tags attached.")) {
             // Extract links containing text, not delete cross
             List<WebElement> links = tagsValueElement.findElements(By.cssSelector("a"));
             for(int i = 0 ; i < links.size() ; i += 2) {
