@@ -35,29 +35,7 @@ public class IssuesServiceImpl implements IssuesService {
         // TODO: Gestion de l'erreur si on ne trouve pas l'issue
         
         extractAllMandatoryFields(issue, driver);
-        
-        /* Optional fields */
-        // Steps to reproduce
-        try {
-            WebElement strTitle         = driver.findElement(By.xpath(
-                "//td[text()='Steps To Reproduce' and @class='category']"));
-            WebElement strElement       = strTitle.findElement(By.xpath("./following-sibling::td"));
-            String     stepsToReproduce = strElement.getText();
-            issue.setStepsToReproduce(stepsToReproduce);
-        } catch (NoSuchElementException e) {
-            System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
-        }
-        
-        // Additional Information
-        try {
-            WebElement aiTitle          = driver.findElement(By.xpath(
-                "//td[text()='Additional Information' and @class='category']"));
-            WebElement strElement       = aiTitle.findElement(By.xpath("./following-sibling::td"));
-            String     stepsToReproduce = strElement.getText();
-            issue.setAdditionalInformation(stepsToReproduce);
-        } catch (NoSuchElementException e) {
-            System.err.println(e.getClass().getSimpleName() + " : No additional information.");
-        }
+        extractAllOptionalFields(issue, driver);
         
         driver.quit();
         return issue;
@@ -101,14 +79,26 @@ public class IssuesServiceImpl implements IssuesService {
                 case "priority":
                     issue.setPriority(extractPriority(driver));
                     break;
-                case "status":
-                    issue.setStatus(extractStatus(driver));
-                    break;
                 case "severity":
                     issue.setSeverity(extractSeverity(driver));
                     break;
                 case "reproducibility":
                     issue.setReproducibility(extractReproducibility(driver));
+                    break;
+                case "status":
+                    issue.setStatus(extractStatus(driver));
+                    break;
+                case "resolution":
+                    issue.setResolution(extractResolution(driver));
+                    break;
+                case "platform":
+                    issue.setPlatform(extractPlatform(driver));
+                    break;
+                case "os":
+                    issue.setOs(extractOs(driver));
+                    break;
+                case "os version":
+                    issue.setOsVersion(extractOsVersion(driver));
                     break;
                 case "summary":
                     issue.setSummary(extractSummary(driver));
@@ -120,13 +110,14 @@ public class IssuesServiceImpl implements IssuesService {
                     issue.setTags(extractTags(driver));
                     break;
                 case "steps":
-                    
+                    issue.setStepsToReproduce(extractStepsToReproduce(driver));
                     break;
                 case "additional info":
-                    
+                    issue.setAdditionalInformation(extractAdditionalInformation(driver));
                     break;
                 default:
                     // TODO: Throw exception Issue field not found
+                    System.err.println(selected + " not found.");
                     break;
             }
         }
@@ -194,6 +185,11 @@ public class IssuesServiceImpl implements IssuesService {
         issue.setSummary(extractSummary(driver));
         issue.setDescription(extractDescription(driver));
         issue.setTags(extractTags(driver));
+    }
+    
+    private void extractAllOptionalFields (Issue issue, WebDriver driver) {
+        issue.setStepsToReproduce(extractStepsToReproduce(driver));
+        issue.setAdditionalInformation(extractAdditionalInformation(driver));
     }
     
     private String extractId (WebDriver driver) {
@@ -285,5 +281,32 @@ public class IssuesServiceImpl implements IssuesService {
             }
         }
         return tags;
+    }
+    
+    
+    private String extractStepsToReproduce (WebDriver driver) {
+        try {
+            WebElement strTitle = driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and " +
+                "@class='category']"));
+            WebElement strElement       = strTitle.findElement(By.xpath("./following-sibling::td"));
+            String     stepsToReproduce = strElement.getText();
+            return stepsToReproduce;
+        } catch (NoSuchElementException e) {
+            System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
+            return null;
+        }
+    }
+    
+    private String extractAdditionalInformation (WebDriver driver) {
+        try {
+            WebElement aiTitle = driver.findElement(By.xpath("//td[text()='Additional Information' and " +
+                "@class='category']"));
+            WebElement strElement       = aiTitle.findElement(By.xpath("./following-sibling::td"));
+            String     additionalInformation = strElement.getText();
+            return additionalInformation;
+        } catch (NoSuchElementException e) {
+            System.err.println(e.getClass().getSimpleName() + " : No additional information.");
+            return null;
+        }
     }
 }
