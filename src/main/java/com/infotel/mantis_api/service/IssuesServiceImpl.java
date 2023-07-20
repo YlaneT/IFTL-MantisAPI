@@ -84,7 +84,7 @@ public class IssuesServiceImpl implements IssuesService {
                     issue.setCategory(extractCategory(driver));
                     break;
                 case "view status":
-                    
+                    issue.setViewStatus(extractViewStatus(driver));
                     break;
                 case "submitted":
                     issue.setSubmitted(extractSubmitted(driver));
@@ -178,14 +178,19 @@ public class IssuesServiceImpl implements IssuesService {
         issue.setId(extractId(driver));
         issue.setProject(extractProject(driver));
         issue.setCategory(extractCategory(driver));
+        issue.setViewStatus(extractViewStatus(driver));
         issue.setSubmitted(extractSubmitted(driver));
         issue.setLastUpdated(extractUpdated(driver));
         issue.setReporter(extractReporter(driver));
         issue.setAssigned(extractAssigned(driver));
         issue.setPriority(extractPriority(driver));
-        issue.setStatus(extractStatus(driver));
         issue.setSeverity(extractSeverity(driver));
         issue.setReproducibility(extractReproducibility(driver));
+        issue.setStatus(extractStatus(driver));
+        issue.setResolution(extractResolution(driver));
+        issue.setPlatform(extractPlatform(driver));
+        issue.setOs(extractOs(driver));
+        issue.setOsVersion(extractOsVersion(driver));
         issue.setSummary(extractSummary(driver));
         issue.setDescription(extractDescription(driver));
         issue.setTags(extractTags(driver));
@@ -231,16 +236,32 @@ public class IssuesServiceImpl implements IssuesService {
         return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[2]")).getText();
     }
     
-    private String extractStatus (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[8]/td[2]")).getText();
-    }
-    
     private String extractSeverity (WebDriver driver) {
         return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[4]")).getText();
     }
     
     private String extractReproducibility (WebDriver driver) {
         return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[6]")).getText();
+    }
+    
+    private String extractStatus (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[8]/td[2]")).getText();
+    }
+    
+    private String extractResolution (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[8]/td[4]")).getText();
+    }
+    
+    private String extractPlatform (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[9]/td[2]")).getText();
+    }
+    
+    private String extractOs (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[9]/td[4]")).getText();
+    }
+    
+    private String extractOsVersion (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[9]/td[6]")).getText();
     }
     
     private String extractSummary (WebDriver driver) {

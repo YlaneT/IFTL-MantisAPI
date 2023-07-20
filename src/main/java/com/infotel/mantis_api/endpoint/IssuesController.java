@@ -30,10 +30,4 @@ public class IssuesController {
         IssuesService service = new IssuesServiceImpl();
         return service.searchAllIssues(pageSize, page);
     }
-
-    @GetMapping()
-    public List<IssueRecap> getAllIssues() {
-        IssuesService service = new IssuesServiceImpl();
-        return service.searchAllIssues(50, 1);
-    }
 }
