@@ -1,18 +1,17 @@
 package com.infotel.mantis_api;
 
+import com.infotel.mantis_api.model.Issue;
+import com.infotel.mantis_api.service.IssuesServiceImpl;
 
-import com.infotel.mantis_api.service.ViewIssues;
-import com.infotel.mantis_api.util.Authenticator;
-import org.openqa.selenium.WebDriver;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class Main {
-
-
-    public static void main (String[] args) throws InterruptedException {
-        Authenticator auth = new Authenticator();
-        WebDriver driver = auth.login();
-        ViewIssues.getAllIssues(driver);
-
-        driver.quit();
+    public static void main (String[] args) {
+        SpringApplication.run(Main.class, args);
     }
 }
