@@ -34,58 +34,7 @@ public class IssuesServiceImpl implements IssuesService {
         
         // TODO: Gestion de l'erreur si on ne trouve pas l'issue
         
-        // Mandatory fields
-        WebElement idElement = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[1]"));
-        issue.setId(idElement.getText());
-        
-        WebElement projectElement = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[2]"));
-        issue.setProject(projectElement.getText());
-        
-        WebElement categoryElement = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[3]"));
-        issue.setCategory(categoryElement.getText());
-        
-        WebElement submittedElement = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[5]"));
-        issue.setSubmitted(parseDate(submittedElement.getText()));
-        
-        WebElement lastUpdatedElement = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[6]"));
-        issue.setLastUpdated(parseDate(lastUpdatedElement.getText()));
-        
-        WebElement reporterElement = driver.findElement(By.xpath("//table[3]/tbody/tr[5]/td[2]"));
-        issue.setReporter(reporterElement.getText());
-        
-        WebElement assignedElement = driver.findElement(By.xpath("//table[3]/tbody/tr[6]/td[2]"));
-        issue.setAssigned(assignedElement.getText());
-        
-        WebElement priorityElement = driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[2]"));
-        issue.setPriority(priorityElement.getText());
-        
-        WebElement statusElement = driver.findElement(By.xpath("//table[3]/tbody/tr[8]/td[2]"));
-        issue.setStatus(statusElement.getText());
-        
-        WebElement severityElement = driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[4]"));
-        issue.setSeverity(severityElement.getText());
-        
-        WebElement reproducibilityElement = driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[6]"));
-        issue.setReproducibility(reproducibilityElement.getText());
-        
-        WebElement summaryElement = driver.findElement(By.xpath("//table[3]/tbody/tr[11]/td[2]"));
-        issue.setSummary(summaryElement.getText());
-        
-        WebElement descriptionElement = driver.findElement(By.xpath("//table[3]/tbody/tr[12]/td[2]"));
-        issue.setDescription(descriptionElement.getText());
-        
-        // Tags
-        WebElement tagsCategoryElement = driver.findElement(By.xpath("//td[text()='Tags' and @class='category']"));
-        
-        if (!tagsCategoryElement.getText().equals("No tags attached.")) {
-            // Find immediate sibling of Tags header
-            WebElement tagsValueElement = tagsCategoryElement.findElement(By.xpath("./following-sibling::td"));
-            // Extract links containing text, not delete cross
-            List<WebElement> links = tagsValueElement.findElements(By.cssSelector("a"));
-            for(int i = 0 ; i < links.size() ; i += 2) {
-                issue.getTags().add(links.get(i).getText());
-            }
-        }
+        extractAllMandatoryFields(issue, driver);
         
         /* Optional fields */
         // Steps to reproduce
@@ -158,5 +107,97 @@ public class IssuesServiceImpl implements IssuesService {
             issues.add(issue);
         }
         return issues;
+    }
+    
+    private void extractAllMandatoryFields (Issue issue, WebDriver driver) {
+        issue.setId(extractId(driver));
+        issue.setProject(extractProject(driver));
+        issue.setCategory(extractCategory(driver));
+        issue.setSubmitted(extractSubmitted(driver));
+        issue.setLastUpdated(extractUpdated(driver));
+        issue.setReporter(extractReporter(driver));
+        issue.setAssigned(extractAssigned(driver));
+        issue.setPriority(extractPriority(driver));
+        issue.setStatus(extractStatus(driver));
+        issue.setSeverity(extractSeverity(driver));
+        issue.setReproducibility(extractReproducibility(driver));
+        issue.setSummary(extractSummary(driver));
+        issue.setDescription(extractDescription(driver));
+        issue.setTags(extractTags(driver));
+    }
+    
+    private String extractId (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[1]")).getText();
+    }
+    
+    private String extractProject (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[2]")).getText();
+    }
+    
+    private String extractCategory (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[3]")).getText();
+    }
+    
+    private String extractViewStatus (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[4]")).getText();
+    }
+    
+    private LocalDateTime extractSubmitted (WebDriver driver) {
+        WebElement element      = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[5]"));
+        String     submittedStr = element.getText();
+        return LocalDateTime.parse(submittedStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+    }
+    
+    private LocalDateTime extractUpdated (WebDriver driver) {
+        WebElement element    = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[6]"));
+        String     updatedStr = element.getText();
+        return LocalDateTime.parse(updatedStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+    }
+    
+    private String extractReporter (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[5]/td[2]")).getText();
+    }
+    
+    private String extractAssigned (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[6]/td[2]")).getText();
+    }
+    
+    private String extractPriority (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[2]")).getText();
+    }
+    
+    private String extractStatus (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[8]/td[2]")).getText();
+    }
+    
+    private String extractSeverity (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[4]")).getText();
+    }
+    
+    private String extractReproducibility (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[6]")).getText();
+    }
+    
+    private String extractSummary (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[11]/td[2]")).getText();
+    }
+    
+    private String extractDescription (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[12]/td[2]")).getText();
+    }
+    
+    private List<String> extractTags (WebDriver driver) {
+        WebElement   tagsCategoryElement = driver.findElement(By.xpath("//td[text()='Tags' and @class='category']"));
+        List<String> tags                = new ArrayList<>();
+        if (!tagsCategoryElement.getText().equals("No tags attached.")) {
+            // Find immediate sibling of Tags header
+            WebElement tagsValueElement = tagsCategoryElement.findElement(By.xpath("./following-sibling::td"));
+            // Extract links containing text, not delete cross
+            List<WebElement> links = tagsValueElement.findElements(By.cssSelector("a"));
+            for(int i = 0 ; i < links.size() ; i += 2) {
+                tags.add(links.get(i).getText());
+            }
+        }
+        return tags;
     }
 }
