@@ -104,10 +104,6 @@ public class IssuesServiceImpl implements IssuesService {
         return issue;
     }
 
-    @Override
-    public List<Issue> searchAllIssues(int pageSize, int page, List<String> select, int projectId, String filterId) {
-        return null;
-    }
 
     private List<Issue> searchAllIssues() {
         return searchAllIssues(10, 1);
