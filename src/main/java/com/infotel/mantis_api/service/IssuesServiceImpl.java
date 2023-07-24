@@ -127,20 +127,19 @@ public class IssuesServiceImpl implements IssuesService {
             Issue      issue    = new Issue();
             
             List<WebElement> columns    = issueRow.findElements(By.tagName("td"));
-            List<String>     strColumns = new ArrayList<>();
+
+            try {
+                issue.setPriority(columns.get(2).findElement(By.tagName("img")).getAttribute("title"));
+            } catch (NoSuchElementException ignored) {}
             
-            for(WebElement col : columns) {
-                strColumns.add(col.getText());
-            }
+            issue.setId(columns.get(3).getText());
+            // FIXME: Get number (not link)
+            //            issue.setAttachmentCount(strColumns.get(5));
+            issue.setCategory(columns.get(6).getText());
+            issue.setSeverity(columns.get(7).getText());
+            issue.setStatus(columns.get(8).getText());
             
-            //            issue.setPriority(strColumns.get(2)); // FIXME: get Title (not text)
-            issue.setId(strColumns.get(3));
-            //            issue.setAttachmentCount(strColumns.get(5)); // FIXME: Get number (not link)
-            issue.setCategory(strColumns.get(6));
-            issue.setSeverity(strColumns.get(7));
-            issue.setStatus(strColumns.get(8));
-            
-            issue.setSummary(strColumns.get(10));
+            issue.setSummary(columns.get(10).getText());
             
             
             String date = buglist.findElement(By.xpath("//tr[" + (i + 1) + "]/td[" + 10 + "]")).getText();
