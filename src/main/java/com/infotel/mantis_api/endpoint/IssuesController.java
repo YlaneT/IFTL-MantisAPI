@@ -1,5 +1,6 @@
 package com.infotel.mantis_api.endpoint;
 
+import com.infotel.mantis_api.exception.CustomFieldNotFoundException;
 import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.service.IssuesService;
@@ -29,7 +30,10 @@ public class IssuesController {
             }
         } catch (IssueNotFoundException e) {
             System.err.println(e.getMessage());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Issue not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        } catch (CustomFieldNotFoundException e) {
+            System.err.println(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
     

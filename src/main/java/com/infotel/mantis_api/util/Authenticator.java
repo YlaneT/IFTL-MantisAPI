@@ -12,6 +12,7 @@ public class Authenticator {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
+            driver.quit();
             throw new RuntimeException(e);
         }
 
@@ -22,6 +23,7 @@ public class Authenticator {
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
+            driver.quit();
             throw new RuntimeException(e);
         }
         return driver;

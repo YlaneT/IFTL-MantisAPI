@@ -1,5 +1,6 @@
 package com.infotel.mantis_api.service;
 
+import com.infotel.mantis_api.exception.CustomFieldNotFoundException;
 import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.util.Authenticator;
@@ -25,6 +26,7 @@ public class IssuesServiceImpl implements IssuesService {
         try {
             Thread.sleep(1500);
         } catch (InterruptedException e) {
+            driver.quit();
             throw new RuntimeException(e);
         }
         
@@ -32,6 +34,7 @@ public class IssuesServiceImpl implements IssuesService {
             extractAllMandatoryFields(issue, driver);
             extractAllOptionalFields(issue, driver);
         } catch (NoSuchElementException e) {
+            driver.quit();
             String message = driver.findElement(By.xpath("//p[contains(text(),'not found')]")).getText();
             throw new IssueNotFoundException(message);
         }
@@ -40,7 +43,7 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException {
+    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, CustomFieldNotFoundException {
         WebDriver driver = Authenticator.login();
         Issue     issue  = new Issue();
         
@@ -77,6 +80,7 @@ public class IssuesServiceImpl implements IssuesService {
                     runnable.run();
                 } catch (NoSuchElementException e) {
                     String message = driver.findElement(By.xpath("//p[contains(text(),'not found')]")).getText();
+                    driver.quit();
                     throw new IssueNotFoundException(message);
                 }
             }
@@ -88,8 +92,8 @@ public class IssuesServiceImpl implements IssuesService {
                     
                     issue.getCustomFields().put(customFieldElem.getText(), customFieldValElem.getText());
                 } catch (NoSuchElementException e) {
-                    // TODO: Throw exception Issue field not found
-                    System.err.println("\"" + selected + "\" field not found.");
+                    driver.quit();
+                    throw new CustomFieldNotFoundException("\"" + selected + "\" field not found.");
                 }
             }
         }
