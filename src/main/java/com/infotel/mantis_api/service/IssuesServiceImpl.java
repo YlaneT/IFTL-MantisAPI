@@ -1,7 +1,6 @@
 package com.infotel.mantis_api.service;
 
 import com.infotel.mantis_api.model.Issue;
-import com.infotel.mantis_api.model.IssueRecap;
 import com.infotel.mantis_api.util.Authenticator;
 import org.openqa.selenium.*;
 
@@ -84,7 +83,7 @@ public class IssuesServiceImpl implements IssuesService {
         }
 
         try {
-            WebElement strTitle = driver.findElement(By.xpath("//td[text()='Steps To Reproduce']"));
+            WebElement strTitle = driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and @class='category']"));
             WebElement strElement = strTitle.findElement(By.xpath("./following-sibling::td"));
             String stepsToReproduce = strElement.getText();
             issue.setStepsToReproduce(stepsToReproduce);
@@ -110,23 +109,30 @@ public class IssuesServiceImpl implements IssuesService {
         return null;
     }
 
-    public List<IssueRecap> searchAllIssues() {
+    private List<Issue> searchAllIssues() {
         return searchAllIssues(10, 1);
     }
 
-    @Override
-    public List<IssueRecap> searchAllIssues(int pageSize, int page) {
+    /**
+     * @param pageSize number of issues per page
+     * @param page number of the page shown
+     * @return recap of all issues on the page
+     */
+    private List<Issue> searchAllIssues(int pageSize, int page) {
         WebDriver driver = Authenticator.login();
 
         driver.get("http://localhost/mantisbt/view_all_bug_page.php");
 
         WebElement buglist = driver.findElement(By.id("buglist"));
+
+        // TODO: Gérer la pagination
+
         List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
-        List<IssueRecap> issues = new ArrayList<>();
+        List<Issue> issues = new ArrayList<>();
 
         for (int i = 3; i < issueRows.size() - 1; i++) {
             WebElement issueRow = issueRows.get(i);
-            IssueRecap issue = new IssueRecap();
+            Issue issue = new Issue();
 
             List<WebElement> columns = issueRow.findElements(By.tagName("td"));
             List<String> strColumns = new ArrayList<>();
@@ -135,20 +141,101 @@ public class IssuesServiceImpl implements IssuesService {
                 strColumns.add(col.getText());
             }
 
+//            issue.setPriority(strColumns.get(2)); // FIXME: get Title (not text)
             issue.setId(strColumns.get(3));
-//            issue.setPriority(strColumns.get(4)); // FIXME: get Title (not text)
 //            issue.setAttachmentCount(strColumns.get(5)); // FIXME: Get number (not link)
             issue.setCategory(strColumns.get(6));
             issue.setSeverity(strColumns.get(7));
             issue.setStatus(strColumns.get(8));
-            LocalDate date = LocalDate.parse(strColumns.get(9), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            issue.setUpdated(date);
+
             issue.setSummary(strColumns.get(10));
 
 
+            String date = buglist.findElement(By.xpath("//tr["+ (i+1) + "]/td[" + 10 + "]")).getText();
+            issue.setLastUpdated(LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
+
             issues.add(issue);
+            // TODO: Gérer la pagination à nouveau
         }
         return issues;
+    }
+
+    /**
+     * @param pageSize number of issues per page
+     * @param page number of the page shown
+     * @param selectValues fields to be shown
+     * @return selected fields of all issues on the page
+     */
+    public List<Issue> searchAllIssues(int pageSize, int page, List<String> selectValues) {
+        if (selectValues.isEmpty()){
+            return searchAllIssues(pageSize, page);
+        }
+
+        // FIXME
+        WebDriver driver = Authenticator.login();
+
+        driver.get("http://localhost/mantisbt/view_all_bug_page.php");
+
+        WebElement buglist = driver.findElement(By.id("buglist"));
+        List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
+        List<Issue> issues = new ArrayList<>();
+
+        /* For row in issueRows
+         *      ajouter une issue
+         *      tester les selectValues
+         *      si elles contiennent "id" :
+         *          issue.setId( __ )
+         *      si elles contiennent "summary" :
+         *          issue.setSummary ( __ )
+         *      si elles contiennent "description" :
+         *          cliquer sur l'id pour accéder au détail
+         *          issue.setDescription ( __ )
+         *          revenir à la page view_all_bug_page
+         *      ajouter issue à la liste issues
+         */
+
+        for (WebElement row : issueRows) {
+            Issue issue = new Issue();
+
+            if(selectValues.contains("id")) {
+                WebElement issueId = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/td[4]"));
+                issueId.getText();
+                // issue.setId();
+            } else if (selectValues.contains("summary")) {
+                WebElement summaryIssue = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/tr[11]"));
+                summaryIssue.getText();
+                //  issue.setSummary();
+            } else if (selectValues.contains("description")) {
+                WebElement issueDetail = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/td[4]"));
+                issueDetail.click();
+                extractDescription(driver);
+                // issue.setDescription();
+            } else {
+                driver.get("http://localhost/mantisbt/view_all_bug_page.php");
+            }
+            issues.add(issue);
+        }
+
+
+    /*
+        WebElement issueID = driver.findElement(By.cssSelector("a[href='/mantisbt/view.php?id=3']"));
+        issueID.click();
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        driver.get("http://localhost/mantisbt/view.php?id=3");
+        */
+
+
+        return null;
+    }
+
+    private String extractDescription (WebDriver driver) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[12]/td[2]")).getText();
     }
 
     private static LocalDateTime parseDate(String date) {
