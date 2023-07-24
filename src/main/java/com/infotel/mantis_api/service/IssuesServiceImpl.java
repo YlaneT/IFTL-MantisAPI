@@ -69,7 +69,8 @@ public class IssuesServiceImpl implements IssuesService {
         
         for(String selected : selectValues) {
             if (issueTab.containsKey(selected.toLowerCase())) {
-                issueTab.get(selected.toLowerCase());
+                Runnable runnable = issueTab.get(selected.toLowerCase());
+                runnable.run();
             } else {
                 try {
                     WebElement customFieldElem =
