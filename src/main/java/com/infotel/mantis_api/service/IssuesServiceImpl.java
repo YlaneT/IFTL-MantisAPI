@@ -1,5 +1,6 @@
 package com.infotel.mantis_api.service;
 
+import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.util.Authenticator;
 import org.openqa.selenium.NoSuchElementException;
@@ -13,7 +14,7 @@ import java.util.*;
 public class IssuesServiceImpl implements IssuesService {
     
     @Override
-    public Issue searchIssue (int id) {
+    public Issue searchIssue (int id) throws IssueNotFoundException {
         WebDriver driver = Authenticator.login();
         Issue     issue  = new Issue();
         
@@ -27,17 +28,19 @@ public class IssuesServiceImpl implements IssuesService {
             throw new RuntimeException(e);
         }
         
-        // TODO: Gestion de l'erreur si on ne trouve pas l'issue
-        
-        extractAllMandatoryFields(issue, driver);
-        extractAllOptionalFields(issue, driver);
-        
+        try {
+            extractAllMandatoryFields(issue, driver);
+            extractAllOptionalFields(issue, driver);
+        } catch (NoSuchElementException e) {
+            String message = driver.findElement(By.xpath("//p[contains(text(),'not found')]")).getText();
+            throw new IssueNotFoundException(message);
+        }
         driver.quit();
         return issue;
     }
     
     @Override
-    public Issue searchIssue (int id, List<String> selectValues) {
+    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException {
         WebDriver driver = Authenticator.login();
         Issue     issue  = new Issue();
         
@@ -69,14 +72,19 @@ public class IssuesServiceImpl implements IssuesService {
         
         for(String selected : selectValues) {
             if (issueTab.containsKey(selected.toLowerCase())) {
-                Runnable runnable = issueTab.get(selected.toLowerCase());
-                runnable.run();
-            } else {
+                try {
+                    Runnable runnable = issueTab.get(selected.toLowerCase());
+                    runnable.run();
+                } catch (NoSuchElementException e) {
+                    String message = driver.findElement(By.xpath("//p[contains(text(),'not found')]")).getText();
+                    throw new IssueNotFoundException(message);
+                }
+            }
+            else {
                 try {
                     WebElement customFieldElem =
-                        driver.findElement(By.xpath("//td[text()='"+selected+"' and @class='category']"));
-                    WebElement   customFieldValElem =
-                        customFieldElem.findElement(By.xpath("./following-sibling::td"));
+                        driver.findElement(By.xpath("//td[text()='" + selected + "' and @class='category']"));
+                    WebElement customFieldValElem = customFieldElem.findElement(By.xpath("./following-sibling::td"));
                     
                     issue.getCustomFields().put(customFieldElem.getText(), customFieldValElem.getText());
                 } catch (NoSuchElementException e) {
@@ -88,109 +96,98 @@ public class IssuesServiceImpl implements IssuesService {
         driver.quit();
         return issue;
     }
-
-    private List<Issue> searchAllIssues() {
+    
+    private List<Issue> searchAllIssues () {
         return searchAllIssues(10, 1);
     }
-
+    
     /**
      * @param pageSize number of issues per page
-     * @param page number of the page shown
+     * @param page     number of the page shown
      * @return recap of all issues on the page
      */
-    private List<Issue> searchAllIssues(int pageSize, int page) {
+    private List<Issue> searchAllIssues (int pageSize, int page) {
         WebDriver driver = Authenticator.login();
         
         driver.get("http://localhost/mantisbt/view_all_bug_page.php");
-
+        
         WebElement buglist = driver.findElement(By.id("buglist"));
-
+        
         // TODO: Gérer la pagination
-
+        
         List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
-        List<Issue> issues = new ArrayList<>();
-
-        for (int i = 3; i < issueRows.size() - 1; i++) {
+        List<Issue>      issues    = new ArrayList<>();
+        
+        for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
             WebElement issueRow = issueRows.get(i);
-            Issue issue = new Issue();
-
-            List<WebElement> columns = issueRow.findElements(By.tagName("td"));
-            List<String> strColumns = new ArrayList<>();
-
-            for (WebElement col : columns) {
+            Issue      issue    = new Issue();
+            
+            List<WebElement> columns    = issueRow.findElements(By.tagName("td"));
+            List<String>     strColumns = new ArrayList<>();
+            
+            for(WebElement col : columns) {
                 strColumns.add(col.getText());
             }
-
-//            issue.setPriority(strColumns.get(2)); // FIXME: get Title (not text)
+            
+            //            issue.setPriority(strColumns.get(2)); // FIXME: get Title (not text)
             issue.setId(strColumns.get(3));
-//            issue.setAttachmentCount(strColumns.get(5)); // FIXME: Get number (not link)
+            //            issue.setAttachmentCount(strColumns.get(5)); // FIXME: Get number (not link)
             issue.setCategory(strColumns.get(6));
             issue.setSeverity(strColumns.get(7));
             issue.setStatus(strColumns.get(8));
-
+            
             issue.setSummary(strColumns.get(10));
-
-
-            String date = buglist.findElement(By.xpath("//tr["+ (i+1) + "]/td[" + 10 + "]")).getText();
+            
+            
+            String date = buglist.findElement(By.xpath("//tr[" + (i + 1) + "]/td[" + 10 + "]")).getText();
             issue.setLastUpdated(LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
-
+            
             issues.add(issue);
         }
         driver.quit();
         return issues;
     }
-
+    
     /**
-     * @param pageSize number of issues per page
-     * @param page number of the page shown
+     * @param pageSize     number of issues per page
+     * @param page         number of the page shown
      * @param selectValues fields to be shown
      * @return selected fields of all issues on the page
      */
-    public List<Issue> searchAllIssues(int pageSize, int page, List<String> selectValues) {
-        if (selectValues.isEmpty()){
+    public List<Issue> searchAllIssues (int pageSize, int page, List<String> selectValues) {
+        if (selectValues.isEmpty()) {
             return searchAllIssues(pageSize, page);
         }
-
+        
         // FIXME
         WebDriver driver = Authenticator.login();
-
+        
         driver.get("http://localhost/mantisbt/view_all_bug_page.php");
-
-        WebElement buglist = driver.findElement(By.id("buglist"));
+        
+        WebElement       buglist   = driver.findElement(By.id("buglist"));
         List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
-        List<Issue> issues = new ArrayList<>();
-
-        /* For row in issueRows
-         *      ajouter une issue
-         *      tester les selectValues
-         *      si elles contiennent "id" :
-         *          issue.setId( __ )
-         *      si elles contiennent "summary" :
-         *          issue.setSummary ( __ )
-         *      si elles contiennent "description" :
-         *          cliquer sur l'id pour accéder au détail
-         *          issue.setDescription ( __ )
-         *          revenir à la page view_all_bug_page
-         *      ajouter issue à la liste issues
-         */
-
-        for (WebElement row : issueRows) {
+        List<Issue>      issues    = new ArrayList<>();
+        
+        for(WebElement row : issueRows) {
             Issue issue = new Issue();
-
-            if(selectValues.contains("id")) {
+            
+            if (selectValues.contains("id")) {
                 WebElement issueId = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/td[4]"));
                 issueId.getText();
                 // issue.setId();
-            } else if (selectValues.contains("summary")) {
+            }
+            else if (selectValues.contains("summary")) {
                 WebElement summaryIssue = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/tr[11]"));
                 summaryIssue.getText();
                 //  issue.setSummary();
-            } else if (selectValues.contains("description")) {
+            }
+            else if (selectValues.contains("description")) {
                 WebElement issueDetail = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/td[4]"));
                 issueDetail.click();
                 extractDescription(driver);
                 // issue.setDescription();
-            } else {
+            }
+            else {
                 driver.get("http://localhost/mantisbt/view_all_bug_page.php");
             }
             issues.add(issue);
@@ -209,7 +206,7 @@ public class IssuesServiceImpl implements IssuesService {
 
         driver.get("http://localhost/mantisbt/view.php?id=3");
         */
-
+        
         driver.quit();
         return null;
     }
@@ -334,14 +331,12 @@ public class IssuesServiceImpl implements IssuesService {
         return tags;
     }
     
-    
     private String extractStepsToReproduce (WebDriver driver) {
         try {
             WebElement strTitle =
-                driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and " + "@class='category']"));
+                driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and @class='category']"));
             WebElement strElement       = strTitle.findElement(By.xpath("./following-sibling::td"));
-            String     stepsToReproduce = strElement.getText();
-            return stepsToReproduce;
+            return strElement.getText();
         } catch (NoSuchElementException e) {
             System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
             return null;
@@ -351,16 +346,16 @@ public class IssuesServiceImpl implements IssuesService {
     private String extractAdditionalInformation (WebDriver driver) {
         try {
             WebElement aiTitle =
-                driver.findElement(By.xpath("//td[text()='Additional Information' and " + "@class" + "='category']"));
-            WebElement strElement            = aiTitle.findElement(By.xpath("./following-sibling::td"));
+                driver.findElement(By.xpath("//td[text()='Additional Information' and @class='category']"));
+            WebElement strElement = aiTitle.findElement(By.xpath("./following-sibling::td"));
             return strElement.getText();
         } catch (NoSuchElementException e) {
             System.err.println(e.getClass().getSimpleName() + " : No additional information.");
             return null;
         }
     }
-
-    private static LocalDateTime parseDate(String date) {
+    
+    private static LocalDateTime parseDate (String date) {
         return LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
 }

@@ -1,9 +1,12 @@
 package com.infotel.mantis_api.endpoint;
 
+import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.service.IssuesService;
 import com.infotel.mantis_api.service.IssuesServiceImpl;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -15,12 +18,18 @@ public class IssuesController {
     public Issue getIssue (@PathVariable("id") int id,
         @RequestParam(value = "select", required = false) String select) {
         IssuesService service = new IssuesServiceImpl();
-        
-        if (select == null){
-            return service.searchIssue(id);
-        } else {
-            List<String> selectValues = Arrays.asList(select.split(","));
-            return service.searchIssue(id, selectValues);
+        try {
+            if (select == null) {
+                
+                return service.searchIssue(id);
+            }
+            else {
+                List<String> selectValues = Arrays.asList(select.split(","));
+                return service.searchIssue(id, selectValues);
+            }
+        } catch (IssueNotFoundException e) {
+            System.err.println(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Issue not found");
         }
     }
     
