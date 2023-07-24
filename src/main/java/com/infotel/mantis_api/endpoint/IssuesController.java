@@ -5,20 +5,25 @@ import com.infotel.mantis_api.service.IssuesService;
 import com.infotel.mantis_api.service.IssuesServiceImpl;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @RestController
 @RequestMapping("/issues")
 public class IssuesController {
-
+    
     @GetMapping("/{id}")
-    public Issue getIssue(@PathVariable("id") int id) {
+    public Issue getIssue (@PathVariable("id") int id,
+        @RequestParam(value = "select", required = false) String select) {
         IssuesService service = new IssuesServiceImpl();
-        return service.searchIssue(id);
+        
+        if (select == null){
+            return service.searchIssue(id);
+        } else {
+            List<String> selectValues = Arrays.asList(select.split(","));
+            return service.searchIssue(id, selectValues);
+        }
     }
-
+    
     @GetMapping()
     public List<Issue> getAllIssues(@RequestParam(value = "pageSize", defaultValue = "50") int pageSize,
                                          @RequestParam(value = "page", defaultValue = "1") int page,
