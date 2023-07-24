@@ -3,13 +3,13 @@ package com.infotel.mantis_api.service;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.model.IssueRecap;
 import com.infotel.mantis_api.util.Authenticator;
+import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class IssuesServiceImpl implements IssuesService {
     
@@ -51,74 +51,20 @@ public class IssuesServiceImpl implements IssuesService {
         driver.findElement(By.xpath("//input[@value='Jump']")).click();
         
         for(String selected : selectValues) {
-            switch (selected.toLowerCase()) {
-                case "id":
-                    issue.setId(extractId(driver));
-                    break;
-                case "project":
-                    issue.setProject(extractProject(driver));
-                    break;
-                case "category":
-                    issue.setCategory(extractCategory(driver));
-                    break;
-                case "view status":
-                    issue.setViewStatus(extractViewStatus(driver));
-                    break;
-                case "submitted":
-                    issue.setSubmitted(extractSubmitted(driver));
-                    break;
-                case "updated":
-                    issue.setLastUpdated(extractUpdated(driver));
-                    break;
-                case "reporter":
-                    issue.setReporter(extractReporter(driver));
-                    break;
-                case "assigned":
-                    issue.setAssigned(extractAssigned(driver));
-                    break;
-                case "priority":
-                    issue.setPriority(extractPriority(driver));
-                    break;
-                case "severity":
-                    issue.setSeverity(extractSeverity(driver));
-                    break;
-                case "reproducibility":
-                    issue.setReproducibility(extractReproducibility(driver));
-                    break;
-                case "status":
-                    issue.setStatus(extractStatus(driver));
-                    break;
-                case "resolution":
-                    issue.setResolution(extractResolution(driver));
-                    break;
-                case "platform":
-                    issue.setPlatform(extractPlatform(driver));
-                    break;
-                case "os":
-                    issue.setOs(extractOs(driver));
-                    break;
-                case "os version":
-                    issue.setOsVersion(extractOsVersion(driver));
-                    break;
-                case "summary":
-                    issue.setSummary(extractSummary(driver));
-                    break;
-                case "description":
-                    issue.setDescription(extractDescription(driver));
-                    break;
-                case "tags":
-                    issue.setTags(extractTags(driver));
-                    break;
-                case "steps":
-                    issue.setStepsToReproduce(extractStepsToReproduce(driver));
-                    break;
-                case "additional info":
-                    issue.setAdditionalInformation(extractAdditionalInformation(driver));
-                    break;
-                default:
+            if (issueTab.containsKey(selected.toLowerCase())) {
+                issueTab.get(selected.toLowerCase());
+            } else {
+                try {
+                    WebElement customFieldElem =
+                        driver.findElement(By.xpath("//td[text()='"+selected+"' and @class='category']"));
+                    WebElement   customFieldValElem =
+                        customFieldElem.findElement(By.xpath("./following-sibling::td"));
+                    
+                    issue.getCustomFields().put(customFieldElem.getText(), customFieldValElem.getText());
+                } catch (NoSuchElementException e) {
                     // TODO: Throw exception Issue field not found
-                    System.err.println(selected + " not found.");
-                    break;
+                    System.err.println("\"" + selected + "\" not found.");
+                }
             }
         }
         return issue;

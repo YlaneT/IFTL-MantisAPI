@@ -4,8 +4,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Data
 @Entity
@@ -33,12 +32,13 @@ public class Issue {
     private List<String>  tags; // id, name, description
     // Optional fields /!\ appear before tags
     private String        stepsToReproduce;
-    private String        additionalInformation;
-    // TODO: Custom fields
+    private String              additionalInformation;
+    private Map<String, String> customFields;
     
     
     public Issue () {
         tags = new ArrayList<>();
+        customFields = new HashMap<>();
     }
     
     public void setSummary (String summary) {
