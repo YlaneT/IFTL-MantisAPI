@@ -84,6 +84,7 @@ public class IssuesServiceImpl implements IssuesService {
                 }
             }
         }
+        driver.quit();
         return issue;
     }
 
@@ -134,6 +135,7 @@ public class IssuesServiceImpl implements IssuesService {
 
             issues.add(issue);
         }
+        driver.quit();
         return issues;
     }
 
@@ -207,7 +209,7 @@ public class IssuesServiceImpl implements IssuesService {
         driver.get("http://localhost/mantisbt/view.php?id=3");
         */
 
-
+        driver.quit();
         return null;
     }
     
@@ -260,12 +262,12 @@ public class IssuesServiceImpl implements IssuesService {
     
     private LocalDateTime extractSubmitted (WebDriver driver) {
         String submittedStr = extractFromIssueTab(driver, 3, 5);
-        return LocalDateTime.parse(submittedStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        return parseDate(submittedStr);
     }
     
     private LocalDateTime extractUpdated (WebDriver driver) {
         String updatedStr = extractFromIssueTab(driver, 3, 6);
-        return LocalDateTime.parse(updatedStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        return parseDate(updatedStr);
     }
     
     private String extractReporter (WebDriver driver) {
