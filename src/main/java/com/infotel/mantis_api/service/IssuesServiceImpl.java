@@ -49,6 +49,28 @@ public class IssuesServiceImpl implements IssuesService {
         // FIXME? use url : http://localhost/mantisbt/view.php?id=1
         driver.findElement(By.name("bug_id")).sendKeys(String.valueOf(id));
         driver.findElement(By.xpath("//input[@value='Jump']")).click();
+        Map<String, Runnable> issueTab = new HashMap<>();
+        issueTab.put("id", () -> issue.setId(extractId(driver)));
+        issueTab.put("project", () -> issue.setProject(extractProject(driver)));
+        issueTab.put("category", () -> issue.setCategory(extractCategory(driver)));
+        issueTab.put("view status", () -> issue.setViewStatus(extractViewStatus(driver)));
+        issueTab.put("submitted", () -> issue.setSubmitted(extractSubmitted(driver)));
+        issueTab.put("updated", () -> issue.setLastUpdated(extractUpdated(driver)));
+        issueTab.put("reporter", () -> issue.setReporter(extractReporter(driver)));
+        issueTab.put("assigned", () -> issue.setAssigned(extractAssigned(driver)));
+        issueTab.put("priority", () -> issue.setPriority(extractPriority(driver)));
+        issueTab.put("severity", () -> issue.setSeverity(extractSeverity(driver)));
+        issueTab.put("reproducibility", () -> issue.setReproducibility(extractReproducibility(driver)));
+        issueTab.put("status", () -> issue.setStatus(extractStatus(driver)));
+        issueTab.put("resolution", () -> issue.setResolution(extractResolution(driver)));
+        issueTab.put("platform", () -> issue.setPlatform(extractPlatform(driver)));
+        issueTab.put("os", () -> issue.setOs(extractOs(driver)));
+        issueTab.put("os version", () -> issue.setOsVersion(extractOsVersion(driver)));
+        issueTab.put("summary", () -> issue.setSummary(extractSummary(driver)));
+        issueTab.put("description", () -> issue.setDescription(extractDescription(driver)));
+        issueTab.put("tags", () -> issue.setTags(extractTags(driver)));
+        issueTab.put("steps", () -> issue.setStepsToReproduce(extractStepsToReproduce(driver)));
+        issueTab.put("additional info", () -> issue.setAdditionalInformation(extractAdditionalInformation(driver)));
         
         for(String selected : selectValues) {
             if (issueTab.containsKey(selected.toLowerCase())) {
@@ -63,7 +85,7 @@ public class IssuesServiceImpl implements IssuesService {
                     issue.getCustomFields().put(customFieldElem.getText(), customFieldValElem.getText());
                 } catch (NoSuchElementException e) {
                     // TODO: Throw exception Issue field not found
-                    System.err.println("\"" + selected + "\" not found.");
+                    System.err.println("\"" + selected + "\" field not found.");
                 }
             }
         }
@@ -138,80 +160,82 @@ public class IssuesServiceImpl implements IssuesService {
         issue.setAdditionalInformation(extractAdditionalInformation(driver));
     }
     
+    private String extractFromIssueTab (WebDriver driver, int x, int y) {
+        return driver.findElement(By.xpath("//table[3]/tbody/tr[" + x + "]/td[" + y + "]")).getText();
+    }
+    
     private String extractId (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[1]")).getText();
+        return extractFromIssueTab(driver, 3, 1);
     }
     
     private String extractProject (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[2]")).getText();
+        return extractFromIssueTab(driver, 3, 2);
     }
     
     private String extractCategory (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[3]")).getText();
+        return extractFromIssueTab(driver, 3, 3);
     }
     
     private String extractViewStatus (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[4]")).getText();
+        return extractFromIssueTab(driver, 3, 4);
     }
     
     private LocalDateTime extractSubmitted (WebDriver driver) {
-        WebElement element      = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[5]"));
-        String     submittedStr = element.getText();
+        String submittedStr = extractFromIssueTab(driver, 3, 5);
         return LocalDateTime.parse(submittedStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
     
     private LocalDateTime extractUpdated (WebDriver driver) {
-        WebElement element    = driver.findElement(By.xpath("//table[3]/tbody/tr[3]/td[6]"));
-        String     updatedStr = element.getText();
+        String updatedStr = extractFromIssueTab(driver, 3, 6);
         return LocalDateTime.parse(updatedStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
     
     private String extractReporter (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[5]/td[2]")).getText();
+        return extractFromIssueTab(driver, 5, 2);
     }
     
     private String extractAssigned (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[6]/td[2]")).getText();
+        return extractFromIssueTab(driver, 6, 2);
     }
     
     private String extractPriority (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[2]")).getText();
+        return extractFromIssueTab(driver, 7, 2);
     }
     
     private String extractSeverity (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[4]")).getText();
+        return extractFromIssueTab(driver, 7, 4);
     }
     
     private String extractReproducibility (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[7]/td[6]")).getText();
+        return extractFromIssueTab(driver, 7, 6);
     }
     
     private String extractStatus (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[8]/td[2]")).getText();
+        return extractFromIssueTab(driver, 8, 2);
     }
     
     private String extractResolution (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[8]/td[4]")).getText();
+        return extractFromIssueTab(driver, 8, 4);
     }
     
     private String extractPlatform (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[9]/td[2]")).getText();
+        return extractFromIssueTab(driver, 9, 2);
     }
     
     private String extractOs (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[9]/td[4]")).getText();
+        return extractFromIssueTab(driver, 9, 4);
     }
     
     private String extractOsVersion (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[9]/td[6]")).getText();
+        return extractFromIssueTab(driver, 9, 6);
     }
     
     private String extractSummary (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[11]/td[2]")).getText();
+        return extractFromIssueTab(driver, 11, 2);
     }
     
     private String extractDescription (WebDriver driver) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[12]/td[2]")).getText();
+        return extractFromIssueTab(driver, 12, 2);
     }
     
     private List<String> extractTags (WebDriver driver) {
@@ -232,8 +256,8 @@ public class IssuesServiceImpl implements IssuesService {
     
     private String extractStepsToReproduce (WebDriver driver) {
         try {
-            WebElement strTitle = driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and " +
-                "@class='category']"));
+            WebElement strTitle =
+                driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and " + "@class='category']"));
             WebElement strElement       = strTitle.findElement(By.xpath("./following-sibling::td"));
             String     stepsToReproduce = strElement.getText();
             return stepsToReproduce;
@@ -245,11 +269,10 @@ public class IssuesServiceImpl implements IssuesService {
     
     private String extractAdditionalInformation (WebDriver driver) {
         try {
-            WebElement aiTitle = driver.findElement(By.xpath("//td[text()='Additional Information' and " +
-                "@class='category']"));
-            WebElement strElement       = aiTitle.findElement(By.xpath("./following-sibling::td"));
-            String     additionalInformation = strElement.getText();
-            return additionalInformation;
+            WebElement aiTitle =
+                driver.findElement(By.xpath("//td[text()='Additional Information' and " + "@class" + "='category']"));
+            WebElement strElement            = aiTitle.findElement(By.xpath("./following-sibling::td"));
+            return strElement.getText();
         } catch (NoSuchElementException e) {
             System.err.println(e.getClass().getSimpleName() + " : No additional information.");
             return null;
