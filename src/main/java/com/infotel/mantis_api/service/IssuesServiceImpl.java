@@ -121,12 +121,52 @@ public class IssuesServiceImpl implements IssuesService {
         Select selectProject = new Select(selectProjectElement);
         selectProject.selectByValue("0");
         
+        if (pageSize != 50) {
+            driver.findElement(By.id("per_page_filter")).click();
+            try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            driver.quit();
+            throw new RuntimeException(e);
+        }
+            WebElement inputPageSize = driver.findElement(By.name("per_page"));
+            inputPageSize.clear();
+            inputPageSize.sendKeys(String.valueOf(pageSize));
+            try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            driver.quit();
+            throw new RuntimeException(e);
+        }
+            driver.findElement(By.name("filter")).click();
+        }
+        
+        List<Issue>      issues    = new ArrayList<>();
+        
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            driver.quit();
+            throw new RuntimeException(e);
+        }
+        
         WebElement buglist = driver.findElement(By.id("buglist"));
         
-        // TODO: Gérer la pagination
+        // Check total number of issues
+        WebElement viewingIssues = buglist.findElement(By.xpath("//span[contains(text(),'Viewing Issues')]"));
+        String temp = viewingIssues.getText().split("/ ")[1];
+        int totalIssues = Integer.parseInt(temp.substring(0, temp.length() - 1));
         
-        List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
-        List<Issue>      issues    = new ArrayList<>();
+        if ((page - 1) * pageSize > totalIssues) {
+            System.err.println("Page " + page + " doesn't exist.");
+            return issues;
+        }
+        
+        if (page != 1) {
+            driver.get("http://localhost/mantisbt/view_all_bug_page.php?page_number=" + page);
+        }
+        
+        List<WebElement> issueRows = driver.findElement(By.id("buglist")).findElements(By.tagName("tr"));
         
         for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
             WebElement issueRow = issueRows.get(i);
