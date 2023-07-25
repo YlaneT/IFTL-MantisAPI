@@ -1,6 +1,6 @@
 package com.infotel.mantis_api.service;
 
-import com.infotel.mantis_api.exception.CustomFieldNotFoundException;
+import com.infotel.mantis_api.exception.FieldNotFoundException;
 import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.util.Authenticator;
@@ -44,7 +44,7 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, CustomFieldNotFoundException {
+    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, FieldNotFoundException {
         WebDriver driver = Authenticator.login();
         Issue     issue  = new Issue();
         
@@ -94,7 +94,7 @@ public class IssuesServiceImpl implements IssuesService {
                     issue.getCustomFields().put(customFieldElem.getText(), customFieldValElem.getText());
                 } catch (NoSuchElementException e) {
                     driver.quit();
-                    throw new CustomFieldNotFoundException("\"" + selected + "\" field not found.");
+                    throw new FieldNotFoundException("\"" + selected + "\" field not found.");
                 }
             }
         }
