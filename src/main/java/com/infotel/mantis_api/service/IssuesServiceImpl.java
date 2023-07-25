@@ -179,17 +179,22 @@ public class IssuesServiceImpl implements IssuesService {
             } catch (NoSuchElementException ignored) {}
             
             issue.setId(columns.get(3).getText());
-            // FIXME: Get number (not link)
-            //            issue.setAttachmentCount(strColumns.get(5));
+            
+            String noteCountStr = columns.get(4).getText();
+            if (!noteCountStr.isBlank()) {
+                issue.setNoteCount(Integer.parseInt(noteCountStr));
+            }
+            
+            String attachmentCountStr = columns.get(5).getText();
+            if (!attachmentCountStr.isBlank()) {
+                issue.setAttachmentCount(Integer.parseInt(attachmentCountStr));
+            }
+         
             issue.setCategory(columns.get(6).getText());
             issue.setSeverity(columns.get(7).getText());
             issue.setStatus(columns.get(8).getText());
-            
+            issue.setLastUpdated(LocalDate.parse(columns.get(9).getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
             issue.setSummary(columns.get(10).getText());
-            
-            
-            String date = buglist.findElement(By.xpath("//tr[" + (i + 1) + "]/td[" + 10 + "]")).getText();
-            issue.setLastUpdated(LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
             
             issues.add(issue);
         }
@@ -241,20 +246,6 @@ public class IssuesServiceImpl implements IssuesService {
             }
             issues.add(issue);
         }
-
-
-    /*
-        WebElement issueID = driver.findElement(By.cssSelector("a[href='/mantisbt/view.php?id=3']"));
-        issueID.click();
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        driver.get("http://localhost/mantisbt/view.php?id=3");
-        */
         
         driver.quit();
         return null;
