@@ -6,6 +6,7 @@ import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.util.Authenticator;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.Select;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -114,6 +115,11 @@ public class IssuesServiceImpl implements IssuesService {
         WebDriver driver = Authenticator.login();
         
         driver.get("http://localhost/mantisbt/view_all_bug_page.php");
+        
+        // Show all projects
+        WebElement selectProjectElement = driver.findElement(By.name("project_id"));
+        Select selectProject = new Select(selectProjectElement);
+        selectProject.selectByValue("0");
         
         WebElement buglist = driver.findElement(By.id("buglist"));
         
