@@ -34,8 +34,8 @@ public class IssuesServiceImpl implements IssuesService {
             extractAllMandatoryFields(issue, driver);
             extractAllOptionalFields(issue, driver);
         } catch (NoSuchElementException e) {
-            driver.quit();
             String message = driver.findElement(By.xpath("//p[contains(text(),'not found')]")).getText();
+            driver.quit();
             throw new IssueNotFoundException(message);
         }
         driver.quit();
