@@ -32,8 +32,8 @@ public class IssuesServiceImpl implements IssuesService {
         }
         
         try {
-            extractAllMandatoryFields(issue, driver);
-            extractAllOptionalFields(issue, driver);
+            extractAndSetAllMandatoryFields(issue, driver);
+            extractAndSetAllOptionalFields(issue, driver);
         } catch (NoSuchElementException e) {
             String message = driver.findElement(By.xpath("//p[contains(text(),'not found')]")).getText();
             driver.quit();
@@ -113,90 +113,32 @@ public class IssuesServiceImpl implements IssuesService {
      */
     private List<Issue> searchAllIssues (int pageSize, int page) {
         WebDriver driver = Authenticator.login();
+        List<Issue>      issues    = new ArrayList<>();
         
         driver.get("http://localhost/mantisbt/view_all_bug_page.php");
         
         // Show all projects
-        WebElement selectProjectElement = driver.findElement(By.name("project_id"));
-        Select selectProject = new Select(selectProjectElement);
-        selectProject.selectByValue("0");
+        selectProjectFilter(driver, 0);
         
+        // Select number of issue per page
         if (pageSize != 50) {
-            driver.findElement(By.id("per_page_filter")).click();
-            try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            driver.quit();
-            throw new RuntimeException(e);
-        }
-            WebElement inputPageSize = driver.findElement(By.name("per_page"));
-            inputPageSize.clear();
-            inputPageSize.sendKeys(String.valueOf(pageSize));
-            try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            driver.quit();
-            throw new RuntimeException(e);
-        }
-            driver.findElement(By.name("filter")).click();
+            selectPageSize(driver, pageSize);
         }
         
-        List<Issue>      issues    = new ArrayList<>();
-        
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            driver.quit();
-            throw new RuntimeException(e);
-        }
-        
-        WebElement buglist = driver.findElement(By.id("buglist"));
-        
-        // Check total number of issues
-        WebElement viewingIssues = buglist.findElement(By.xpath("//span[contains(text(),'Viewing Issues')]"));
-        String temp = viewingIssues.getText().split("/ ")[1];
-        int totalIssues = Integer.parseInt(temp.substring(0, temp.length() - 1));
-        
-        if ((page - 1) * pageSize > totalIssues) {
-            System.err.println("Page " + page + " doesn't exist.");
-            return issues;
-        }
-        
+        // check if page exists
+        int totalIssues = getTotalIssues(driver);
         if (page != 1) {
+            if ((page - 1) * pageSize > totalIssues) {
+                System.err.println("Page " + page + " doesn't exist.");
+                return issues;
+            }
             driver.get("http://localhost/mantisbt/view_all_bug_page.php?page_number=" + page);
         }
         
         List<WebElement> issueRows = driver.findElement(By.id("buglist")).findElements(By.tagName("tr"));
         
         for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
-            WebElement issueRow = issueRows.get(i);
-            Issue      issue    = new Issue();
-            
-            List<WebElement> columns    = issueRow.findElements(By.tagName("td"));
-
-            try {
-                issue.setPriority(columns.get(2).findElement(By.tagName("img")).getAttribute("title"));
-            } catch (NoSuchElementException ignored) {}
-            
-            issue.setId(columns.get(3).getText());
-            
-            String noteCountStr = columns.get(4).getText();
-            if (!noteCountStr.isBlank()) {
-                issue.setNoteCount(Integer.parseInt(noteCountStr));
-            }
-            
-            String attachmentCountStr = columns.get(5).getText();
-            if (!attachmentCountStr.isBlank()) {
-                issue.setAttachmentCount(Integer.parseInt(attachmentCountStr));
-            }
-         
-            issue.setCategory(columns.get(6).getText());
-            issue.setSeverity(columns.get(7).getText());
-            issue.setStatus(columns.get(8).getText());
-            issue.setLastUpdated(LocalDate.parse(columns.get(9).getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
-            issue.setSummary(columns.get(10).getText());
-            
-            issues.add(issue);
+            issues.add(extractAndSetRecap(issueRows.get(i)));
         }
         driver.quit();
         return issues;
@@ -251,7 +193,70 @@ public class IssuesServiceImpl implements IssuesService {
         return null;
     }
     
-    private void extractAllMandatoryFields (Issue issue, WebDriver driver) {
+    private int getTotalIssues (WebDriver driver) {
+        WebElement buglist = driver.findElement(By.id("buglist"));
+        WebElement viewingIssues = buglist.findElement(By.xpath("//span[contains(text(),'Viewing Issues')]"));
+        String temp = viewingIssues.getText().split("/ ")[1];
+        return Integer.parseInt(temp.substring(0, temp.length() - 1));
+    }
+    
+    private void selectPageSize (WebDriver driver, int pageSize) {
+        driver.findElement(By.id("per_page_filter")).click();
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            driver.quit();
+            throw new RuntimeException(e);
+        }
+        WebElement inputPageSize = driver.findElement(By.name("per_page"));
+        inputPageSize.clear();
+        inputPageSize.sendKeys(String.valueOf(pageSize));
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            driver.quit();
+            throw new RuntimeException(e);
+        }
+        driver.findElement(By.name("filter")).click();
+    }
+    
+    private void selectProjectFilter (WebDriver driver, int projectFilter) {
+        WebElement selectProjectElement = driver.findElement(By.name("project_id"));
+        Select selectProject = new Select(selectProjectElement);
+        selectProject.selectByValue("0");
+    }
+    
+    private Issue extractAndSetRecap (WebElement issueRow) {
+        Issue      issue    = new Issue();
+        
+        List<WebElement> columns    = issueRow.findElements(By.tagName("td"));
+        
+        try {
+            issue.setPriority(columns.get(2).findElement(By.tagName("img")).getAttribute("title"));
+        } catch (NoSuchElementException ignored) {}
+        
+        issue.setId(columns.get(3).getText());
+        
+        String noteCountStr = columns.get(4).getText();
+        if (!noteCountStr.isBlank()) {
+            issue.setNoteCount(Integer.parseInt(noteCountStr));
+        }
+        
+        String attachmentCountStr = columns.get(5).getText();
+        if (!attachmentCountStr.isBlank()) {
+            issue.setAttachmentCount(Integer.parseInt(attachmentCountStr));
+        }
+        
+        issue.setCategory(columns.get(6).getText());
+        issue.setSeverity(columns.get(7).getText());
+        issue.setStatus(columns.get(8).getText());
+        issue.setLastUpdated(LocalDate.parse(columns.get(9).getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
+        issue.setSummary(columns.get(10).getText());
+        
+        return issue;
+    }
+    
+    private void extractAndSetAllMandatoryFields (Issue issue, WebDriver driver) {
         issue.setId(extractId(driver));
         issue.setProject(extractProject(driver));
         issue.setCategory(extractCategory(driver));
@@ -273,7 +278,7 @@ public class IssuesServiceImpl implements IssuesService {
         issue.setTags(extractTags(driver));
     }
     
-    private void extractAllOptionalFields (Issue issue, WebDriver driver) {
+    private void extractAndSetAllOptionalFields (Issue issue, WebDriver driver) {
         issue.setStepsToReproduce(extractStepsToReproduce(driver));
         issue.setAdditionalInformation(extractAdditionalInformation(driver));
     }
