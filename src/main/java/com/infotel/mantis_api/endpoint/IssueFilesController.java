@@ -1,5 +1,6 @@
 package com.infotel.mantis_api.endpoint;
 
+import com.infotel.mantis_api.exception.IssueFileNotFound;
 import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.service.IssueFilesService;
 import com.infotel.mantis_api.service.IssueFilesServiceImpl;
@@ -12,13 +13,17 @@ import java.util.List;
 @RestController
 @RequestMapping("/issues/{issue_id}/files")
 public class IssueFilesController {
-
-//    TODO: Unimplemented
-//    @GetMapping("/{file_id}")
-//    public String getIssueFile (@PathVariable("issue_id") int issueId, @PathVariable("file_id") int fileId) {
-//        IssueFilesService service = new IssueFilesServiceImpl();
-//        return service.searchIssueFile(issueId, fileId);
-//    }
+    
+    @GetMapping("/{file_id}")
+    public String getIssueFile (@PathVariable("issue_id") int issueId, @PathVariable("file_id") int fileId) {
+        IssueFilesService service = new IssueFilesServiceImpl();
+        try {
+            return service.searchIssueFile(issueId, fileId);
+        } catch (IssueNotFoundException | IssueFileNotFound e) {
+            System.err.println(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
     
     @GetMapping()
     public List<String> getAllIssueFiles (@PathVariable("issue_id") int issueId) {

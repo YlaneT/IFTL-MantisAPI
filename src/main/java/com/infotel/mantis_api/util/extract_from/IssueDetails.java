@@ -1,5 +1,6 @@
 package com.infotel.mantis_api.util.extract_from;
 
+import com.infotel.mantis_api.exception.IssueFileNotFound;
 import com.infotel.mantis_api.model.Issue;
 import org.openqa.selenium.*;
 
@@ -168,10 +169,30 @@ public class IssueDetails {
         }
         
         List<WebElement> filesElements = filesElement.findElements(By.xpath("//a[text()='^']"));
-        List<String>     filesLinks    = filesElements.stream().map((x) -> x.getAttribute("href")).toList();
         
+        return filesElements.stream().map((x) -> x.getAttribute("href")).toList();
+    }
+    
+    public static String extractFile (WebDriver driver, int fileId) throws IssueFileNotFound {
+        WebElement f1           = driver.findElement(By.id("attachments"));
+        WebElement f2           = f1.findElement(By.xpath("./parent::td"));
+        WebElement filesElement = f2.findElement(By.xpath("./following-sibling::td"));
+        
+        if (filesElement.getText().isEmpty()) {
+            driver.quit();
+            throw new IssueFileNotFound("Issue file with id " + fileId + " not found");
+        }
+        
+        List<WebElement> fileLinks = filesElement.findElements(By.xpath("//a[text()='^']"));
+        for(WebElement linkElement : fileLinks) {
+            String hrefValue = linkElement.getAttribute("href");
+            if (hrefValue.contains("id=" + fileId + "&")){
+                driver.quit();
+                return hrefValue;
+            }
+        }
         driver.quit();
-        return filesLinks;
+        throw new IssueFileNotFound("Issue file with id " + fileId + " not found");
     }
     
     private static LocalDateTime parseDate (String date) {
