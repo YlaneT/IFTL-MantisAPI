@@ -1,0 +1,33 @@
+package com.infotel.mantis_api.endpoint;
+
+import com.infotel.mantis_api.exception.IssueNotFoundException;
+import com.infotel.mantis_api.service.IssueFilesService;
+import com.infotel.mantis_api.service.IssueFilesServiceImpl;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/issues/{issue_id}/files")
+public class IssueFilesController {
+
+//    TODO: Unimplemented
+//    @GetMapping("/{file_id}")
+//    public String getIssueFile (@PathVariable("issue_id") int issueId, @PathVariable("file_id") int fileId) {
+//        IssueFilesService service = new IssueFilesServiceImpl();
+//        return service.searchIssueFile(issueId, fileId);
+//    }
+    
+    @GetMapping()
+    public List<String> getAllIssueFiles (@PathVariable("issue_id") int issueId) {
+        IssueFilesService service = new IssueFilesServiceImpl();
+        try {
+            return service.searchAllIssueFiles(issueId);
+        } catch (IssueNotFoundException e) {
+            System.err.println(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
+}

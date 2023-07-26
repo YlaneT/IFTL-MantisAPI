@@ -135,9 +135,9 @@ public class IssueDetails {
     
     public static String extractStepsToReproduce (WebDriver driver) {
         try {
-            WebElement strTitle =
-                driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and @class='category']"));
-            WebElement strElement       = strTitle.findElement(By.xpath("./following-sibling::td"));
+            String     xPath      = "//td[text()='Steps To Reproduce' and @class='category']";
+            WebElement strTitle   = driver.findElement(By.xpath(xPath));
+            WebElement strElement = strTitle.findElement(By.xpath("./following-sibling::td"));
             return strElement.getText();
         } catch (NoSuchElementException e) {
             System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
@@ -147,14 +147,31 @@ public class IssueDetails {
     
     public static String extractAdditionalInformation (WebDriver driver) {
         try {
-            WebElement aiTitle =
-                driver.findElement(By.xpath("//td[text()='Additional Information' and @class='category']"));
+            String     xPath      = "//td[text()='Additional Information' and @class='category']";
+            WebElement aiTitle    = driver.findElement(By.xpath(xPath));
             WebElement strElement = aiTitle.findElement(By.xpath("./following-sibling::td"));
             return strElement.getText();
         } catch (NoSuchElementException e) {
             System.err.println(e.getClass().getSimpleName() + " : No additional information.");
             return null;
         }
+    }
+    
+    public static List<String> extractAttachedFiles (WebDriver driver) throws NoSuchElementException {
+        
+        WebElement f1           = driver.findElement(By.id("attachments"));
+        WebElement f2           = f1.findElement(By.xpath("./parent::td"));
+        WebElement filesElement = f2.findElement(By.xpath("./following-sibling::td"));
+        
+        if (filesElement.getText().isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<WebElement> filesElements = filesElement.findElements(By.xpath("//a[text()='^']"));
+        List<String>     filesLinks    = filesElements.stream().map((x) -> x.getAttribute("href")).toList();
+        
+        driver.quit();
+        return filesLinks;
     }
     
     private static LocalDateTime parseDate (String date) {
