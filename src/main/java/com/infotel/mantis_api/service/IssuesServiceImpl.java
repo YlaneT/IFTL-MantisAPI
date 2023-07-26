@@ -111,7 +111,8 @@ public class IssuesServiceImpl implements IssuesService {
      * @param page     number of the page shown
      * @return recap of all issues on the page
      */
-    private List<Issue> searchAllIssues (int pageSize, int page) {
+    @Override
+    public List<Issue> searchAllIssues (int pageSize, int page) {
         WebDriver driver = Authenticator.login();
         List<Issue>      issues    = new ArrayList<>();
         
@@ -151,12 +152,7 @@ public class IssuesServiceImpl implements IssuesService {
      * @param selectValues fields to be shown
      * @return selected fields of all issues on the page
      */
-    public List<Issue> searchAllIssues (int pageSize, int page, List<String> selectValues) {
-        if (selectValues.isEmpty()) {
-            return searchAllIssues(pageSize, page);
-        }
-        
-        // FIXME
+    public List<Issue> searchAllIssues (int pageSize, int page, List<String> selectValues) throws FieldNotFoundException {
         WebDriver driver = Authenticator.login();
         
         driver.get("http://localhost/mantisbt/view_all_bug_page.php");
@@ -165,33 +161,58 @@ public class IssuesServiceImpl implements IssuesService {
         List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
         List<Issue>      issues    = new ArrayList<>();
         
-        for(WebElement row : issueRows) {
-            Issue issue = new Issue();
+        for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
+            WebElement issueRow = issueRows.get(i);
+            List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
             
+            Issue issue = new Issue();
+            int fields = 0;
             if (selectValues.contains("id")) {
-                WebElement issueId = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/td[4]"));
-                issueId.getText();
-                // issue.setId();
+                IssueRecap.extractAndSetId(issue, issueCol);
+                fields++;
             }
-            else if (selectValues.contains("summary")) {
-                WebElement summaryIssue = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/tr[11]"));
-                summaryIssue.getText();
-                //  issue.setSummary();
+            if (selectValues.contains("priority")) {
+                IssueRecap.extractAndSetPriority(issue, issueCol);
+                fields++;
             }
-            else if (selectValues.contains("description")) {
-                WebElement issueDetail = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/td[4]"));
-                issueDetail.click();
-                IssueDetails.extractDescription(driver);
-                // issue.setDescription();
+            if (selectValues.contains("note count")) {
+                IssueRecap.extractAndSetNoteCount(issue, issueCol);
+                fields++;
             }
-            else {
-                driver.get("http://localhost/mantisbt/view_all_bug_page.php");
+            if (selectValues.contains("attachment count")) {
+                IssueRecap.extractAndSetAttachmentCount(issue, issueCol);
+                fields++;
+            }
+            if (selectValues.contains("category")) {
+                IssueRecap.extractAndSetCategory(issue, issueCol);
+                fields++;
+            }
+            if (selectValues.contains("severity")) {
+                IssueRecap.extractAndSetSeverity(issue, issueCol);
+                fields++;
+            }
+            if (selectValues.contains("status")) {
+                IssueRecap.extractAndSetStatus(issue, issueCol);
+                fields++;
+            }
+            if (selectValues.contains("updated")) {
+                IssueRecap.extractAndSetLastUpdated(issue, issueCol);
+                fields++;
+            }
+            if (selectValues.contains("summary")) {
+                IssueRecap.extractAndSetSummary(issue, issueCol);
+                fields++;
+            }
+            
+            if (fields == 0) {
+                driver.quit();
+                throw new FieldNotFoundException("Field(s) " + String.join(", ", selectValues) + " not found");
             }
             issues.add(issue);
         }
         
         driver.quit();
-        return null;
+        return issues;
     }
     
     private int getTotalIssues (WebDriver driver) {

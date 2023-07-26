@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 @RestController
 @RequestMapping("/issues")
@@ -19,9 +20,9 @@ public class IssuesController {
     public Issue getIssue (@PathVariable("id") int id,
         @RequestParam(value = "select", required = false) String select) {
         IssuesService service = new IssuesServiceImpl();
+        
         try {
             if (select == null) {
-                
                 return service.searchIssue(id);
             }
             else {
@@ -41,11 +42,19 @@ public class IssuesController {
     public List<Issue> getAllIssues(@RequestParam(value = "pageSize", defaultValue = "50") int pageSize,
                                          @RequestParam(value = "page", defaultValue = "1") int page,
                                          @RequestParam(value="select", required = false) String select) {
-        List<String> selectValues = new ArrayList<>();
-        if (select != null){
-            selectValues = Arrays.asList(select.split(","));
-        }
         IssuesService service = new IssuesServiceImpl();
-        return service.searchAllIssues(pageSize, page, selectValues);
+        
+        try {
+            if (select == null) {
+                return service.searchAllIssues(pageSize, page);
+            }
+            else {
+                List<String> selectValues = Arrays.asList(select.split(","));
+                return service.searchAllIssues(pageSize, page, selectValues);
+            }
+        } catch (FieldNotFoundException e) {
+            System.err.println(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
     }
 }
