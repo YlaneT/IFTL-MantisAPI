@@ -11,4 +11,8 @@ public interface IssueFilesService {
     
     // Get all files from an issue
     List<String> searchAllIssueFiles (int issueId) throws IssueNotFoundException;
+    
+    // Remove a file from an issue
+    void deleteIssueFile (int id, int fileId) throws IssueNotFoundException, IssueFileNotFound;
+    
 }

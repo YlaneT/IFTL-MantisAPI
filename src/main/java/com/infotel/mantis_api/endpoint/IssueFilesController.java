@@ -35,4 +35,16 @@ public class IssueFilesController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
         }
     }
+    
+    @DeleteMapping("/{file_id}/delete")
+    public String deleteIssueFile (@PathVariable("issue_id") int issueId, @PathVariable("file_id") int fileId) {
+        IssueFilesService service = new IssueFilesServiceImpl();
+        try {
+            service.deleteIssueFile(issueId, fileId);
+            return "Deleted file " + fileId + " from issue " + issueId;
+        } catch (IssueNotFoundException | IssueFileNotFound e) {
+            System.err.println(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
 }

@@ -195,6 +195,27 @@ public class IssueDetails {
         throw new IssueFileNotFound("Issue file with id " + fileId + " not found");
     }
     
+    public static WebElement ExtractDeleteFileButton (WebDriver driver, int fileId) throws IssueFileNotFound {
+        WebElement f1           = driver.findElement(By.id("attachments"));
+        WebElement f2           = f1.findElement(By.xpath("./parent::td"));
+        WebElement filesElement = f2.findElement(By.xpath("./following-sibling::td"));
+        
+        if (filesElement.getText().isEmpty()) {
+            driver.quit();
+            throw new IssueFileNotFound("Issue file with id " + fileId + " not found");
+        }
+        
+        List<WebElement> fileLinks = filesElement.findElements(By.xpath("//a[text()='Delete']"));
+        for(WebElement linkElement : fileLinks) {
+            String hrefValue = linkElement.getAttribute("href");
+            if (hrefValue.contains("id=" + fileId + "&")){
+                return linkElement;
+            }
+        }
+        driver.quit();
+        throw new IssueFileNotFound("Issue file with id " + fileId + " not found");
+    }
+    
     private static LocalDateTime parseDate (String date) {
         return LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }

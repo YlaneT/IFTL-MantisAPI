@@ -4,8 +4,7 @@ import com.infotel.mantis_api.exception.IssueFileNotFound;
 import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.util.Authenticator;
 import com.infotel.mantis_api.util.extract_from.IssueDetails;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,16 +28,41 @@ public class IssueFilesServiceImpl implements IssueFilesService {
     
     @Override
     public String searchIssueFile (int issueId, int fileId) throws IssueNotFoundException, IssueFileNotFound {
-        WebDriver driver = Authenticator.login();
+        WebDriver    driver     = Authenticator.login();
         List<String> issueFiles = new ArrayList<>();
         
-        // Get all issue Files
         driver.get("http://localhost/mantisbt/view.php?id=" + issueId);
         try {
             return IssueDetails.extractFile(driver, fileId);
         } catch (NoSuchElementException e) {
             driver.quit();
             throw new IssueNotFoundException("Issue " + issueId + " not found");
+        }
+    }
+    
+    @Override
+    public void deleteIssueFile (int issueId, int fileId) throws IssueNotFoundException, IssueFileNotFound {
+        WebDriver driver = Authenticator.login();
+        
+        driver.get("http://localhost/mantisbt/view.php?id=" + issueId);
+        try {
+            IssueDetails.ExtractDeleteFileButton(driver, fileId).click();
+        } catch (NoSuchElementException e) {
+            driver.quit();
+            throw new IssueNotFoundException("Issue " + issueId + " not found");
+        }
+        
+        try {
+            Thread.sleep(1500);
+        } catch (InterruptedException e) {
+            driver.quit();
+            throw new RuntimeException(e);
+        }
+        
+        try {
+            driver.findElement(By.xpath("//input[@value='Delete']")).click();
+        } finally {
+            driver.quit();
         }
     }
 }
