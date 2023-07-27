@@ -40,7 +40,6 @@ public class IssueFilesController {
     
     @DeleteMapping("/{file_id}/delete")
     public String deleteIssueFile (@PathVariable("issue_id") int issueId, @PathVariable("file_id") int fileId) {
-        IssueFilesService service = new IssueFilesServiceImpl();
         try {
             service.deleteIssueFile(issueId, fileId);
             return "Deleted file " + fileId + " from issue " + issueId;

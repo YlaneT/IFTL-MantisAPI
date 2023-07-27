@@ -4,12 +4,10 @@ import com.infotel.mantis_api.exception.IssueFileNotFound;
 import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.util.Authenticator;
 import com.infotel.mantis_api.util.extract_from.IssueDetails;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.openqa.selenium.*;
 
 import java.util.List;
 
@@ -54,7 +52,7 @@ public class IssueFilesServiceImpl implements IssueFilesService {
     
     @Override
     public void deleteIssueFile (int issueId, int fileId) throws IssueNotFoundException, IssueFileNotFound {
-        WebDriver driver = Authenticator.login();
+        WebDriver driver = auth.login();
         
         driver.get("http://localhost/mantisbt/view.php?id=" + issueId);
         try {

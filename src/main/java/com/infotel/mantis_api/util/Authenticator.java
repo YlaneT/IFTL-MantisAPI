@@ -3,15 +3,19 @@ package com.infotel.mantis_api.util;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 
 @Component
 public class Authenticator {
     
+    @Value("${mantis.base-url}")
+    private String baseUrl;
+    
     public WebDriver login () {
         WebDriver driver = new ChromeDriver();
-        driver.get("http://localhost/mantisbt/login_page.php");
+        driver.get(baseUrl + "/login_page.php");
         
         try {
             Thread.sleep(1000);
