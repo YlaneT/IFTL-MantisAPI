@@ -9,9 +9,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * Class containing static methods to extract values from issue details <br>
- * issue details being localhost/mantisbt/view.php?id={id}
+ * issue details being {baseUrl}/view.php?id={id}
  */
 public class IssueDetails {
     public static void extractAndSetAllMandatoryFields (Issue issue, WebDriver driver) {
@@ -187,7 +188,6 @@ public class IssueDetails {
         for(WebElement linkElement : fileLinks) {
             String hrefValue = linkElement.getAttribute("href");
             if (hrefValue.contains("id=" + fileId + "&")){
-                driver.quit();
                 return hrefValue;
             }
         }

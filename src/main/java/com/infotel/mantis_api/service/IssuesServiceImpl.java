@@ -9,20 +9,27 @@ import com.infotel.mantis_api.util.extract_from.IssueRecap;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.Select;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 
+@Service
 public class IssuesServiceImpl implements IssuesService {
+    
+    @Autowired
+    Authenticator auth;
+    @Value("${mantis.base-url}")
+    private String baseUrl;
     
     @Override
     public Issue searchIssue (int id) throws IssueNotFoundException {
-        WebDriver driver = Authenticator.login();
+        WebDriver driver = auth.login();
         Issue     issue  = new Issue();
         
-        // FIXME? use url : http://localhost/mantisbt/view.php?id=1
-        driver.findElement(By.name("bug_id")).sendKeys(String.valueOf(id));
-        driver.findElement(By.xpath("//input[@value='Jump']")).click();
+        driver.get(baseUrl + "/view.php?id=" + id);
         
         try {
             Thread.sleep(1500);
@@ -45,12 +52,11 @@ public class IssuesServiceImpl implements IssuesService {
     
     @Override
     public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, FieldNotFoundException {
-        WebDriver driver = Authenticator.login();
+        WebDriver driver = auth.login();
         Issue     issue  = new Issue();
         
-        // FIXME? use url : http://localhost/mantisbt/view.php?id=1
-        driver.findElement(By.name("bug_id")).sendKeys(String.valueOf(id));
-        driver.findElement(By.xpath("//input[@value='Jump']")).click();
+        driver.get(baseUrl + "/view.php?id=" + id);
+        
         Map<String, Runnable> issueTab = new HashMap<>();
         issueTab.put("id", () -> issue.setId(IssueDetails.extractId(driver)));
         issueTab.put("project", () -> issue.setProject(IssueDetails.extractProject(driver)));
@@ -72,7 +78,8 @@ public class IssuesServiceImpl implements IssuesService {
         issueTab.put("description", () -> issue.setDescription(IssueDetails.extractDescription(driver)));
         issueTab.put("tags", () -> issue.setTags(IssueDetails.extractTags(driver)));
         issueTab.put("steps", () -> issue.setStepsToReproduce(IssueDetails.extractStepsToReproduce(driver)));
-        issueTab.put("additional info", () -> issue.setAdditionalInformation(IssueDetails.extractAdditionalInformation(driver)));
+        issueTab.put("additional info",
+            () -> issue.setAdditionalInformation(IssueDetails.extractAdditionalInformation(driver)));
         
         for(String selected : selectValues) {
             if (issueTab.containsKey(selected.toLowerCase())) {
@@ -87,8 +94,8 @@ public class IssuesServiceImpl implements IssuesService {
             }
             else {
                 try {
-                    WebElement customFieldElem =
-                        driver.findElement(By.xpath("//td[text()='" + selected + "' and @class='category']"));
+                    String     xPath              = "//td[text()='" + selected + "' and @class='category']";
+                    WebElement customFieldElem    = driver.findElement(By.xpath(xPath));
                     WebElement customFieldValElem = customFieldElem.findElement(By.xpath("./following-sibling::td"));
                     
                     issue.getCustomFields().put(customFieldElem.getText(), customFieldValElem.getText());
@@ -113,10 +120,10 @@ public class IssuesServiceImpl implements IssuesService {
      */
     @Override
     public List<Issue> searchAllIssues (int pageSize, int page) {
-        WebDriver driver = Authenticator.login();
-        List<Issue>      issues    = new ArrayList<>();
+        WebDriver   driver = auth.login();
+        List<Issue> issues = new ArrayList<>();
         
-        driver.get("http://localhost/mantisbt/view_all_bug_page.php");
+        driver.get(baseUrl + "/view_all_bug_page.php");
         
         // Show all projects
         selectProjectFilter(driver, 0);
@@ -134,7 +141,7 @@ public class IssuesServiceImpl implements IssuesService {
                 driver.quit();
                 return issues;
             }
-            driver.get("http://localhost/mantisbt/view_all_bug_page.php?page_number=" + page);
+            driver.get(baseUrl + "/view_all_bug_page.php?page_number=" + page);
         }
         
         List<WebElement> issueRows = driver.findElement(By.id("buglist")).findElements(By.tagName("tr"));
@@ -153,20 +160,20 @@ public class IssuesServiceImpl implements IssuesService {
      * @return selected fields of all issues on the page
      */
     public List<Issue> searchAllIssues (int pageSize, int page, List<String> selectValues) throws FieldNotFoundException {
-        WebDriver driver = Authenticator.login();
+        WebDriver driver = auth.login();
         
-        driver.get("http://localhost/mantisbt/view_all_bug_page.php");
+        driver.get(baseUrl + "/view_all_bug_page.php");
         
         WebElement       buglist   = driver.findElement(By.id("buglist"));
         List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
         List<Issue>      issues    = new ArrayList<>();
         
         for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
-            WebElement issueRow = issueRows.get(i);
+            WebElement       issueRow = issueRows.get(i);
             List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
             
-            Issue issue = new Issue();
-            int fields = 0;
+            Issue issue  = new Issue();
+            int   fields = 0;
             if (selectValues.contains("id")) {
                 IssueRecap.extractAndSetId(issue, issueCol);
                 fields++;
@@ -216,9 +223,9 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     private int getTotalIssues (WebDriver driver) {
-        WebElement buglist = driver.findElement(By.id("buglist"));
+        WebElement buglist       = driver.findElement(By.id("buglist"));
         WebElement viewingIssues = buglist.findElement(By.xpath("//span[contains(text(),'Viewing Issues')]"));
-        String temp = viewingIssues.getText().split("/ ")[1];
+        String     temp          = viewingIssues.getText().split("/ ")[1];
         return Integer.parseInt(temp.substring(0, temp.length() - 1));
     }
     
@@ -244,7 +251,7 @@ public class IssuesServiceImpl implements IssuesService {
     
     private void selectProjectFilter (WebDriver driver, int projectFilter) {
         WebElement selectProjectElement = driver.findElement(By.name("project_id"));
-        Select selectProject = new Select(selectProjectElement);
+        Select     selectProject        = new Select(selectProjectElement);
         selectProject.selectByValue("0");
     }
 }
