@@ -7,6 +7,11 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+
+/**
+ * Class containing static methods to extract values from issue recap <br>
+ * issue recap being {baseUrl}/view_all_bug_page.php
+ */
 public class IssueRecap {
     public static Issue extractAndSetFullRecap (WebElement issueRow) {
         Issue issue = new Issue();
