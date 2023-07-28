@@ -15,6 +15,7 @@ public class Authenticator {
     
     public WebDriver login () {
         WebDriver driver = new ChromeDriver();
+        
         driver.get(baseUrl + "/login_page.php");
         
         try {

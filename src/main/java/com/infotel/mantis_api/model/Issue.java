@@ -9,6 +9,7 @@ import java.util.*;
 @Data
 @Entity
 public class Issue {
+    
     @Id
     @GeneratedValue
     private String              id;

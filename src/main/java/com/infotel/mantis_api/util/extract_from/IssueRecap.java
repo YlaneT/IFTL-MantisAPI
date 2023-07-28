@@ -70,7 +70,8 @@ public class IssueRecap {
     }
     
     public static void extractAndSetLastUpdated (Issue issue, List<WebElement> issueCol) {
-        issue.setLastUpdated(LocalDate.parse(issueCol.get(9).getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
+        issue.setLastUpdated(
+            LocalDate.parse(issueCol.get(9).getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
     }
     
     public static void extractAndSetSummary (Issue issue, List<WebElement> issueCol) {

@@ -14,5 +14,4 @@ public interface IssueFilesService {
     
     // Remove a file from an issue
     void deleteIssueFile (int id, int fileId) throws IssueNotFoundException, IssueFileNotFound;
-    
 }

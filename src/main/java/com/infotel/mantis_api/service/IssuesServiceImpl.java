@@ -1,11 +1,14 @@
 package com.infotel.mantis_api.service;
 
+import com.infotel.mantis_api.endpoint.IssueFilesController;
 import com.infotel.mantis_api.exception.FieldNotFoundException;
 import com.infotel.mantis_api.exception.IssueNotFoundException;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.util.Authenticator;
 import com.infotel.mantis_api.util.extract_from.IssueDetails;
 import com.infotel.mantis_api.util.extract_from.IssueRecap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.Select;
@@ -19,6 +22,7 @@ import java.util.*;
 @Service
 public class IssuesServiceImpl implements IssuesService {
     
+    private final Logger log = LogManager.getLogger(IssueFilesController.class);
     @Autowired
     Authenticator auth;
     @Value("${mantis.base-url}")
@@ -79,7 +83,8 @@ public class IssuesServiceImpl implements IssuesService {
         issueTab.put("tags", () -> issue.setTags(IssueDetails.extractTags(driver)));
         issueTab.put("steps", () -> issue.setStepsToReproduce(IssueDetails.extractStepsToReproduce(driver)));
         issueTab.put("additional info",
-            () -> issue.setAdditionalInformation(IssueDetails.extractAdditionalInformation(driver)));
+                     () -> issue.setAdditionalInformation(IssueDetails.extractAdditionalInformation(driver))
+        );
         
         for(String selected : selectValues) {
             if (issueTab.containsKey(selected.toLowerCase())) {
@@ -137,7 +142,7 @@ public class IssuesServiceImpl implements IssuesService {
         int totalIssues = getTotalIssues(driver);
         if (page != 1) {
             if ((page - 1) * pageSize > totalIssues) {
-                System.err.println("Page " + page + " doesn't exist.");
+                log.info("Page " + page + " doesn't exist.");
                 driver.quit();
                 return issues;
             }
@@ -159,7 +164,9 @@ public class IssuesServiceImpl implements IssuesService {
      * @param selectValues fields to be shown
      * @return selected fields of all issues on the page
      */
-    public List<Issue> searchAllIssues (int pageSize, int page, List<String> selectValues) throws FieldNotFoundException {
+    public List<Issue> searchAllIssues (
+        int pageSize, int page, List<String> selectValues
+    ) throws FieldNotFoundException {
         WebDriver driver = auth.login();
         
         driver.get(baseUrl + "/view_all_bug_page.php");
