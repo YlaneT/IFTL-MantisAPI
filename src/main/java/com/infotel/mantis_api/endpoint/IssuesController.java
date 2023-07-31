@@ -10,8 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 
 @RestController
@@ -55,15 +54,9 @@ public class IssuesController {
         log.info("ENDPOINT Get all issue with parameters pageSize=\"%d\", page=\"%d\", select=\"%s\"".formatted(
             pageSize, page, select
         ));
-        
+        List<String> selectValues = select == null ? new ArrayList<>() : Arrays.asList(select.split(","));
         try {
-            if (select == null) {
-                return service.searchAllIssues(pageSize, page, projectId);
-            }
-            else {
-                List<String> selectValues = Arrays.asList(select.split(","));
-                return service.searchAllIssues(pageSize, page, selectValues, projectId);
-            }
+            return service.searchAllIssues(pageSize, page, selectValues, projectId);
         } catch (FieldNotFoundException | ProjectNotFoundException e) {
             log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());

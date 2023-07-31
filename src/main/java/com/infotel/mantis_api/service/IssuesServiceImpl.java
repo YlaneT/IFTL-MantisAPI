@@ -113,49 +113,12 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     /**
-     * @param pageSize number of issues per page
-     * @param page     number of the page shown
-     * @return recap of all issues on the page
-     */
-    @Override
-    public List<Issue> searchAllIssues (int pageSize, int page, int projectId) throws ProjectNotFoundException {
-        WebDriver   driver = auth.login();
-        List<Issue> issues = new ArrayList<>();
-        
-        driver.get(baseUrl + "/view_all_bug_page.php");
-        
-        // Select project
-        String projectName = selectProjectFilter(driver, projectId);
-        
-        // Select number of issue per page
-        selectPageSize(driver, pageSize);
-        
-        // check if page exists
-        int totalIssues = getTotalIssues(driver);
-        if (page != 1) {
-            if ((page - 1) * pageSize > totalIssues) {
-                log.info("Page " + page + " doesn't exist.");
-                driver.quit();
-                return issues;
-            }
-            driver.get(baseUrl + "/view_all_bug_page.php?page_number=" + page);
-        }
-        
-        List<WebElement> issueRows = driver.findElement(By.id("buglist")).findElements(By.tagName("tr"));
-        
-        for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
-            issues.add(IssueRecap.extractAndSetFullRecap(issueRows.get(i), projectName));
-        }
-        driver.quit();
-        return issues;
-    }
-    
-    /**
      * @param pageSize     number of issues per page
      * @param page         number of the page shown
      * @param selectValues fields to be shown
      * @return selected fields of all issues on the page
      */
+    @Override
     public List<Issue> searchAllIssues (
         int pageSize, int page, List<String> selectValues, int projectId
     ) throws FieldNotFoundException, ProjectNotFoundException {
@@ -164,6 +127,79 @@ public class IssuesServiceImpl implements IssuesService {
         
         driver.get(baseUrl + "/view_all_bug_page.php");
         
+        String projectName;
+        try {
+            projectName = displayFilteredProjectIssues(driver,pageSize,page,projectId);
+        } catch (PageDoesNotExistException e) {
+            log.info(e.getMessage());
+            driver.quit();
+            return issues;
+        }
+        
+        WebElement       buglist   = driver.findElement(By.id("buglist"));
+        List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
+        
+        for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
+            WebElement       issueRow = issueRows.get(i);
+            
+            if (selectValues.size() == 0){
+                issues.add(IssueRecap.extractAndSetFullRecap(issueRow, projectName));
+            } else {
+                List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
+                
+                Issue issue = new Issue();
+                issue.setProject(projectName);
+                int fields = 0;
+                if (selectValues.contains("id")) {
+                    IssueRecap.extractAndSetId(issue, issueCol);
+                    fields++;
+                }
+                if (selectValues.contains("priority")) {
+                    IssueRecap.extractAndSetPriority(issue, issueCol);
+                    fields++;
+                }
+                if (selectValues.contains("note count")) {
+                    IssueRecap.extractAndSetNoteCount(issue, issueCol);
+                    fields++;
+                }
+                if (selectValues.contains("attachment count")) {
+                    IssueRecap.extractAndSetAttachmentCount(issue, issueCol);
+                    fields++;
+                }
+                if (selectValues.contains("category")) {
+                    IssueRecap.extractAndSetCategory(issue, issueCol);
+                    fields++;
+                }
+                if (selectValues.contains("severity")) {
+                    IssueRecap.extractAndSetSeverity(issue, issueCol);
+                    fields++;
+                }
+                if (selectValues.contains("status")) {
+                    IssueRecap.extractAndSetStatus(issue, issueCol);
+                    fields++;
+                }
+                if (selectValues.contains("updated")) {
+                    IssueRecap.extractAndSetLastUpdated(issue, issueCol);
+                    fields++;
+                }
+                if (selectValues.contains("summary")) {
+                    IssueRecap.extractAndSetSummary(issue, issueCol);
+                    fields++;
+                }
+                
+                if (fields == 0 && projectName == null) {
+                    driver.quit();
+                    throw new FieldNotFoundException("Field(s) " + String.join(", ", selectValues) + " not found");
+                }
+                issues.add(issue);
+            }
+        }
+        
+        driver.quit();
+        return issues;
+    }
+    
+    private String displayFilteredProjectIssues (WebDriver driver, int pageSize, int page, int projectId) throws ProjectNotFoundException, PageDoesNotExistException {
         // Select project
         String projectName = selectProjectFilter(driver, projectId);
         
@@ -174,70 +210,13 @@ public class IssuesServiceImpl implements IssuesService {
         int totalIssues = getTotalIssues(driver);
         if (page != 1) {
             if ((page - 1) * pageSize > totalIssues) {
-                log.info("Page " + page + " doesn't exist.");
-                driver.quit();
-                return issues;
+                throw new PageDoesNotExistException("Page " + page + " doesn't exist.");
             }
             driver.get(baseUrl + "/view_all_bug_page.php?page_number=" + page);
         }
-        
-        WebElement       buglist   = driver.findElement(By.id("buglist"));
-        List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
-        
-        for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
-            WebElement       issueRow = issueRows.get(i);
-            List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
-            
-            Issue issue = new Issue();
-            issue.setProject(projectName);
-            int fields = 0;
-            if (selectValues.contains("id")) {
-                IssueRecap.extractAndSetId(issue, issueCol);
-                fields++;
-            }
-            if (selectValues.contains("priority")) {
-                IssueRecap.extractAndSetPriority(issue, issueCol);
-                fields++;
-            }
-            if (selectValues.contains("note count")) {
-                IssueRecap.extractAndSetNoteCount(issue, issueCol);
-                fields++;
-            }
-            if (selectValues.contains("attachment count")) {
-                IssueRecap.extractAndSetAttachmentCount(issue, issueCol);
-                fields++;
-            }
-            if (selectValues.contains("category")) {
-                IssueRecap.extractAndSetCategory(issue, issueCol);
-                fields++;
-            }
-            if (selectValues.contains("severity")) {
-                IssueRecap.extractAndSetSeverity(issue, issueCol);
-                fields++;
-            }
-            if (selectValues.contains("status")) {
-                IssueRecap.extractAndSetStatus(issue, issueCol);
-                fields++;
-            }
-            if (selectValues.contains("updated")) {
-                IssueRecap.extractAndSetLastUpdated(issue, issueCol);
-                fields++;
-            }
-            if (selectValues.contains("summary")) {
-                IssueRecap.extractAndSetSummary(issue, issueCol);
-                fields++;
-            }
-            
-            if (fields == 0 && projectName == null) {
-                driver.quit();
-                throw new FieldNotFoundException("Field(s) " + String.join(", ", selectValues) + " not found");
-            }
-            issues.add(issue);
-        }
-        
-        driver.quit();
-        return issues;
+        return projectName;
     }
+    
     
     private int getTotalIssues (WebDriver driver) {
         WebElement buglist       = driver.findElement(By.id("buglist"));
