@@ -1,9 +1,11 @@
 package com.infotel.mantis_api.service;
 
+import com.infotel.mantis_api.exception.FieldNotFoundException;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.util.Authenticator;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.*;
+import org.openqa.selenium.support.ui.Select;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -211,6 +213,112 @@ public class IssuesServiceImpl implements IssuesService {
 
         driver.quit();
         return null;
+    }
+
+    public void createIssue(String category, String reproducibility, String severity,
+                            String priority, String platform, String os,
+                            String osVersion, String assigned, String summary, String description,
+                            String stepsToReproduce, String additionalInformation) throws FieldNotFoundException {
+
+        WebDriver driver = Authenticator.login();
+        driver.get("http://localhost/mantisbt/bug_report_page.php");
+
+        WebElement dropdownCat = driver.findElement(By.name("category_id"));
+        Select dropDown = new Select(dropdownCat);
+
+        //valeur par defaut
+        if(category.isEmpty()){
+            dropDown.selectByValue("1");
+        } else {
+            dropDown.selectByVisibleText(category);
+        }
+
+        WebElement drpReproducibility = driver.findElement(By.name("reproducibility"));
+        Select dropdown = new Select(drpReproducibility);
+
+        if(reproducibility != null && !reproducibility.equals("have not tried")){
+            dropdown.selectByVisibleText(reproducibility);
+        }
+
+        WebElement drpSeverity = driver.findElement(By.name("severity"));
+        Select drop_down = new Select(drpSeverity);
+
+        if(severity != null & !severity.equals("minor")){
+            drop_down.selectByVisibleText(severity);
+        }
+
+        WebElement drpPriority = driver.findElement(By.name("priority"));
+        Select drp_down = new Select(drpPriority);
+
+        if(priority != null && !priority.equals("normal")){
+            drp_down.selectByVisibleText(priority);
+        }
+
+        WebElement platformField = driver.findElement(By.id("platform"));
+
+        if(platform.isEmpty()) {
+            platformField.sendKeys(platform);
+        }
+
+        WebElement osField = driver.findElement(By.id("os"));
+
+        if(os.isEmpty()){
+            osField.sendKeys(os);
+        }
+
+        WebElement osVersionField = driver.findElement(By.id("os_build"));
+
+        if(osVersion.isEmpty()){
+            osVersionField.sendKeys(osVersion);
+        }
+
+        // TODO: Assigned
+
+        WebElement drpAssigned = driver.findElement(By.name("handler_id"));
+        Select drpDown = new Select(drpAssigned);
+
+        if(assigned.isEmpty()) {
+            drpDown.selectByValue("1");
+        } else {
+            drpDown.selectByVisibleText(assigned);
+        }
+
+        WebElement summaryField = driver.findElement(By.name("summary"));
+
+        if(summary.isEmpty()) {
+          //  driver.get("http://localhost/mantisbt/bug_report_page.php");
+            throw new FieldNotFoundException("Summary empty / not found");
+            // TODO: throw new FieldNotFoundException("Summary empty / not found")
+        } else {
+            summaryField.sendKeys(summary);
+        }
+
+        WebElement descriptionField = driver.findElement(By.name("description"));
+
+        if(description.isEmpty()) {
+            // TODO: throw new FieldNotFoundException("Description empty / not found")
+          //  driver.get("http://localhost/mantisbt/bug_report_page.php");
+            Exception e = new Exception();
+            throw new FieldNotFoundException("Description empty / not found", e);
+        } else {
+            descriptionField.sendKeys(description);
+        }
+
+        WebElement stepstoreproduceField = driver.findElement(By.name("steps_to_reproduce"));
+
+        if(!stepsToReproduce.isEmpty()){
+            stepstoreproduceField.sendKeys(stepsToReproduce);
+        }
+
+        WebElement additionalField = driver.findElement(By.name("additional_info"));
+
+        if(!additionalInformation.isEmpty()){
+            additionalField.sendKeys(additionalInformation);
+        }
+
+        WebElement submitButton = driver.findElement(By.className("button"));
+        submitButton.click();
+
     }
 
     private void extractAllMandatoryFields (Issue issue, WebDriver driver) {
