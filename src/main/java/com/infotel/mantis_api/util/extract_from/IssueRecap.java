@@ -46,16 +46,14 @@ public class IssueRecap {
     
     public static void extractAndSetNoteCount (Issue issue, List<WebElement> issueCol) {
         String noteCountStr = issueCol.get(4).getText();
-        if (!noteCountStr.isBlank()) {
-            issue.setNoteCount(Integer.parseInt(noteCountStr));
-        }
+        int noteCount = noteCountStr.isBlank() ? 0 : Integer.parseInt(noteCountStr);
+        issue.setNoteCount(noteCount);
     }
     
     public static void extractAndSetAttachmentCount (Issue issue, List<WebElement> issueCol) {
         String attachmentCountStr = issueCol.get(5).getText();
-        if (!attachmentCountStr.isBlank()) {
-            issue.setAttachmentCount(Integer.parseInt(attachmentCountStr));
-        }
+        int attachmentCount = attachmentCountStr.isBlank() ? 0 : Integer.parseInt(attachmentCountStr);
+        issue.setAttachmentCount(attachmentCount);
     }
     
     public static void extractAndSetCategory (Issue issue, List<WebElement> issueCol) {

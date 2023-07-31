@@ -31,8 +31,8 @@ public class Issue {
     private String              summary;
     private String              description;
     private List<String>        tags;
-    private int                 noteCount;
-    private int                 attachmentCount;
+    private Integer             noteCount;
+    private Integer             attachmentCount;
     // Optional fields /!\ appear before tags
     private String              stepsToReproduce;
     private String              additionalInformation;
