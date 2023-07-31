@@ -1,7 +1,6 @@
 package com.infotel.mantis_api.endpoint;
 
-import com.infotel.mantis_api.exception.FieldNotFoundException;
-import com.infotel.mantis_api.exception.IssueNotFoundException;
+import com.infotel.mantis_api.exception.*;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.service.IssuesService;
 import org.apache.logging.log4j.LogManager;
@@ -50,20 +49,22 @@ public class IssuesController {
     public List<Issue> getAllIssues (
         @RequestParam(value = "pageSize", defaultValue = "50") int pageSize,
         @RequestParam(value = "page", defaultValue = "1") int page,
-        @RequestParam(value = "select", required = false) String select
+        @RequestParam(value = "select", required = false) String select,
+        @RequestParam(value = "project_id", defaultValue = "0") int projectId
     ) {
         log.info("ENDPOINT Get all issue with parameters pageSize=\"%d\", page=\"%d\", select=\"%s\"".formatted(
-            pageSize, page, select));
+            pageSize, page, select
+        ));
         
         try {
             if (select == null) {
-                return service.searchAllIssues(pageSize, page);
+                return service.searchAllIssues(pageSize, page, projectId);
             }
             else {
                 List<String> selectValues = Arrays.asList(select.split(","));
-                return service.searchAllIssues(pageSize, page, selectValues);
+                return service.searchAllIssues(pageSize, page, selectValues, projectId);
             }
-        } catch (FieldNotFoundException e) {
+        } catch (FieldNotFoundException | ProjectNotFoundException e) {
             log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }

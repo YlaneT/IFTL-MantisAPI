@@ -1,8 +1,7 @@
 package com.infotel.mantis_api.service;
 
 import com.infotel.mantis_api.endpoint.IssueFilesController;
-import com.infotel.mantis_api.exception.FieldNotFoundException;
-import com.infotel.mantis_api.exception.IssueNotFoundException;
+import com.infotel.mantis_api.exception.*;
 import com.infotel.mantis_api.model.Issue;
 import com.infotel.mantis_api.util.Authenticator;
 import com.infotel.mantis_api.util.extract_from.IssueDetails;
@@ -83,8 +82,7 @@ public class IssuesServiceImpl implements IssuesService {
         issueTab.put("tags", () -> issue.setTags(IssueDetails.extractTags(driver)));
         issueTab.put("steps", () -> issue.setStepsToReproduce(IssueDetails.extractStepsToReproduce(driver)));
         issueTab.put("additional info",
-                     () -> issue.setAdditionalInformation(IssueDetails.extractAdditionalInformation(driver))
-        );
+            () -> issue.setAdditionalInformation(IssueDetails.extractAdditionalInformation(driver)));
         
         for(String selected : selectValues) {
             if (issueTab.containsKey(selected.toLowerCase())) {
@@ -114,29 +112,23 @@ public class IssuesServiceImpl implements IssuesService {
         return issue;
     }
     
-    private List<Issue> searchAllIssues () {
-        return searchAllIssues(10, 1);
-    }
-    
     /**
      * @param pageSize number of issues per page
      * @param page     number of the page shown
      * @return recap of all issues on the page
      */
     @Override
-    public List<Issue> searchAllIssues (int pageSize, int page) {
+    public List<Issue> searchAllIssues (int pageSize, int page, int projectId) throws ProjectNotFoundException {
         WebDriver   driver = auth.login();
         List<Issue> issues = new ArrayList<>();
         
         driver.get(baseUrl + "/view_all_bug_page.php");
         
-        // Show all projects
-        selectProjectFilter(driver, 0);
+        // Select project
+        String projectName = selectProjectFilter(driver, projectId);
         
         // Select number of issue per page
-        if (pageSize != 50) {
-            selectPageSize(driver, pageSize);
-        }
+        selectPageSize(driver, pageSize);
         
         // check if page exists
         int totalIssues = getTotalIssues(driver);
@@ -152,7 +144,7 @@ public class IssuesServiceImpl implements IssuesService {
         List<WebElement> issueRows = driver.findElement(By.id("buglist")).findElements(By.tagName("tr"));
         
         for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
-            issues.add(IssueRecap.extractAndSetFullRecap(issueRows.get(i)));
+            issues.add(IssueRecap.extractAndSetFullRecap(issueRows.get(i), projectName));
         }
         driver.quit();
         return issues;
@@ -165,22 +157,40 @@ public class IssuesServiceImpl implements IssuesService {
      * @return selected fields of all issues on the page
      */
     public List<Issue> searchAllIssues (
-        int pageSize, int page, List<String> selectValues
-    ) throws FieldNotFoundException {
-        WebDriver driver = auth.login();
+        int pageSize, int page, List<String> selectValues, int projectId
+    ) throws FieldNotFoundException, ProjectNotFoundException {
+        WebDriver   driver = auth.login();
+        List<Issue> issues = new ArrayList<>();
         
         driver.get(baseUrl + "/view_all_bug_page.php");
         
+        // Select project
+        String projectName = selectProjectFilter(driver, projectId);
+        
+        // Select number of issue per page
+        selectPageSize(driver, pageSize);
+        
+        // check if page exists
+        int totalIssues = getTotalIssues(driver);
+        if (page != 1) {
+            if ((page - 1) * pageSize > totalIssues) {
+                log.info("Page " + page + " doesn't exist.");
+                driver.quit();
+                return issues;
+            }
+            driver.get(baseUrl + "/view_all_bug_page.php?page_number=" + page);
+        }
+        
         WebElement       buglist   = driver.findElement(By.id("buglist"));
         List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
-        List<Issue>      issues    = new ArrayList<>();
         
         for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
             WebElement       issueRow = issueRows.get(i);
             List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
             
-            Issue issue  = new Issue();
-            int   fields = 0;
+            Issue issue = new Issue();
+            issue.setProject(projectName);
+            int fields = 0;
             if (selectValues.contains("id")) {
                 IssueRecap.extractAndSetId(issue, issueCol);
                 fields++;
@@ -218,7 +228,7 @@ public class IssuesServiceImpl implements IssuesService {
                 fields++;
             }
             
-            if (fields == 0) {
+            if (fields == 0 && projectName == null) {
                 driver.quit();
                 throw new FieldNotFoundException("Field(s) " + String.join(", ", selectValues) + " not found");
             }
@@ -256,9 +266,25 @@ public class IssuesServiceImpl implements IssuesService {
         driver.findElement(By.name("filter")).click();
     }
     
-    private void selectProjectFilter (WebDriver driver, int projectFilter) {
-        WebElement selectProjectElement = driver.findElement(By.name("project_id"));
-        Select     selectProject        = new Select(selectProjectElement);
-        selectProject.selectByValue("0");
+    private String selectProjectFilter (WebDriver driver, int projectFilter) throws ProjectNotFoundException {
+        WebElement selectProjectElement;
+        try {
+            selectProjectElement = driver.findElement(By.name("project_id"));
+        } catch (NoSuchElementException e) {
+            log.warn("No project found");
+            return null;
+        }
+        
+        Select selectProject = new Select(selectProjectElement);
+        
+        try {
+            selectProject.selectByValue(String.valueOf(projectFilter));
+            selectProjectElement = driver.findElement(By.name("project_id"));
+            selectProject = new Select(selectProjectElement);
+            return projectFilter != 0 ? selectProject.getFirstSelectedOption().getText() : null;
+        } catch (NoSuchElementException e) {
+            driver.quit();
+            throw new ProjectNotFoundException("Project with id " + projectFilter + " not found");
+        }
     }
 }

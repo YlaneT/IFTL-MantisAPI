@@ -13,7 +13,7 @@ import java.util.List;
  * issue recap being {baseUrl}/view_all_bug_page.php
  */
 public class IssueRecap {
-    public static Issue extractAndSetFullRecap (WebElement issueRow) {
+    public static Issue extractAndSetFullRecap (WebElement issueRow, String projectName) {
         Issue issue = new Issue();
         
         List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
@@ -28,6 +28,7 @@ public class IssueRecap {
         extractAndSetLastUpdated(issue, issueCol);
         extractAndSetSummary(issue, issueCol);
         
+        issue.setProject(projectName);
         
         return issue;
     }
