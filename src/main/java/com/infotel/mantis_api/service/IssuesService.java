@@ -12,4 +12,7 @@ public interface IssuesService {
     
     // Get all issues
     List<Issue> searchAllIssues (int pageSize, int page, List<String> selectValues, int projectId) throws FieldNotFoundException, ProjectNotFoundException;
+    
+    // Edit issue
+    String editIssue (Issue issue) throws IssueNotFoundException;
 }

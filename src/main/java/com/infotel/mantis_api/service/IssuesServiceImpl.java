@@ -15,13 +15,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
 import java.util.*;
+
+import static com.infotel.mantis_api.util.edit.EditIssue.*;
 
 
 @Service
 public class IssuesServiceImpl implements IssuesService {
     
-    private final Logger log = LogManager.getLogger(IssueFilesController.class);
+    private static final int    MAX_CUSTOM_LENGTH     = 255;
+    private static final int    MAX_OS_LENGTH         = 32;
+    private static final int    MAX_OS_VERSION_LENGTH = 16;
+    private static final int    MAX_PLATFORM_LENGTH   = 32;
+    private static final int    MAX_SUMMARY_LENGTH    = 128;
+    private final        Logger log                   = LogManager.getLogger(IssueFilesController.class);
     @Autowired
     Authenticator auth;
     @Value("${mantis.base-url}")
@@ -116,6 +124,7 @@ public class IssuesServiceImpl implements IssuesService {
      * @param pageSize     number of issues per page
      * @param page         number of the page shown
      * @param selectValues fields to be shown
+     * @param projectId    project to filter by
      * @return selected fields of all issues on the page
      */
     @Override
@@ -129,7 +138,7 @@ public class IssuesServiceImpl implements IssuesService {
         
         String projectName;
         try {
-            projectName = displayFilteredProjectIssues(driver,pageSize,page,projectId);
+            projectName = displayFilteredProjectIssues(driver, pageSize, page, projectId);
         } catch (PageDoesNotExistException e) {
             log.info(e.getMessage());
             driver.quit();
@@ -140,11 +149,12 @@ public class IssuesServiceImpl implements IssuesService {
         List<WebElement> issueRows = buglist.findElements(By.tagName("tr"));
         
         for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
-            WebElement       issueRow = issueRows.get(i);
+            WebElement issueRow = issueRows.get(i);
             
-            if (selectValues.size() == 0){
+            if (selectValues.size() == 0) {
                 issues.add(IssueRecap.extractAndSetFullRecap(issueRow, projectName));
-            } else {
+            }
+            else {
                 List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
                 
                 Issue issue = new Issue();
@@ -199,6 +209,168 @@ public class IssuesServiceImpl implements IssuesService {
         return issues;
     }
     
+    @Override
+    public String editIssue (Issue issue) throws IssueNotFoundException {
+        if (issue.getId() == null) {
+            throw new IssueNotFoundException("Issue id is null");
+        }
+        
+        Issue        oldIssue      = searchIssue(Integer.parseInt(issue.getId()));
+        String       returnMessage = "Issue " + issue.getId() + " was edited";
+        List<String> errors        = new ArrayList<>();
+        
+        WebDriver driver = auth.login();
+        driver.get(baseUrl + "/view.php?id=" + issue.getId());
+        
+        Class<? extends Issue> clazz  = issue.getClass();
+        Field[]                fields = clazz.getDeclaredFields();
+        
+        extractEditButton(driver).click();
+        
+        try {
+            for(Field field : fields) {
+                field.setAccessible(true);
+                if (isNotNullAndDifferent(oldIssue, issue, field)) {
+                    String fieldName = field.getName();
+                    List<String> uneditable = Arrays.asList("id", "project", "submitted", "lastUpdated", "noteCount",
+                        "attachmentCount", "tags");
+                    if (!uneditable.contains(fieldName)) {
+                        String content = fieldName.equals("customFields") ? "" : (String) field.get(issue);
+                        switch (fieldName) {
+                            case "category" -> {
+                                try {
+                                    editCategory(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "viewStatus" -> {
+                                try {
+                                    editViewStatus(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "reporter" -> {
+                                try {
+                                    editReporter(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "assigned" -> {
+                                try {
+                                    editAssigned(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "priority" -> {
+                                try {
+                                    editPriority(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "severity" -> {
+                                try {
+                                    editSeverity(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "reproducibility" -> {
+                                try {
+                                    editReproducibility(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "status" -> {
+                                try {
+                                    editStatus(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "resolution" -> {
+                                try {
+                                    editResolution(driver, content);
+                                } catch (FieldNotFoundException e) {
+                                    errors.add(e.getMessage());
+                                    log.warn(e.getMessage());
+                                }
+                            }
+                            case "platform" -> {
+                                if ((content).length() > MAX_PLATFORM_LENGTH) {
+                                    errors.add("Platform too long (max " + MAX_PLATFORM_LENGTH + " characters)");
+                                }
+                                editPlatform(driver, verifyInput(content, MAX_PLATFORM_LENGTH));
+                            }
+                            case "os" -> {
+                                if ((content).length() > MAX_OS_LENGTH) {
+                                    errors.add("OS too long (max " + MAX_OS_LENGTH + " characters)");
+                                }
+                                editOs(driver, verifyInput(content, MAX_PLATFORM_LENGTH));
+                            }
+                            case "osVersion" -> {
+                                if ((content).length() > MAX_OS_VERSION_LENGTH) {
+                                    errors.add("OS version too long (max " + MAX_OS_VERSION_LENGTH + " characters)");
+                                }
+                                editOsVersion(driver, verifyInput(content, MAX_OS_VERSION_LENGTH));
+                            }
+                            case "summary" -> {
+                                if ((content).length() > MAX_SUMMARY_LENGTH) {
+                                    errors.add("Summary too long (max " + MAX_SUMMARY_LENGTH + " characters)");
+                                }
+                                editSummary(driver, verifyInput(content, MAX_SUMMARY_LENGTH));
+                            }
+                            case "description" -> editDescription(driver, content);
+                            case "stepsToReproduce" -> editStepsToReproduce(driver, content);
+                            case "additionalInformation" -> editAdditionalInformation(driver, content);
+                            case "customFields" -> {
+                                Map<String, String> customFields = (Map<String, String>) field.get(issue);
+                                for(String key : customFields.keySet()) {
+                                    String value = customFields.get(key);
+                                    try {
+                                        editCustomField(driver, key, verifyInput(value, MAX_CUSTOM_LENGTH));
+                                        if (value.length() > MAX_CUSTOM_LENGTH) {
+                                            errors.add(
+                                                "Custom field \"" + key + "\" too long (max " + MAX_CUSTOM_LENGTH +
+                                                    " characters)");
+                                        }
+                                    } catch (FieldNotFoundException e) {
+                                        errors.add(e.getMessage());
+                                        log.warn(e.getMessage());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (IllegalAccessException e) {
+            driver.quit();
+            e.printStackTrace();
+        }
+        
+        extractUpdateButton(driver).click();
+        
+        driver.quit();
+        if (!errors.isEmpty()) {
+            returnMessage = returnMessage + " with errors: " + String.join(", ", errors);
+        }
+        return returnMessage;
+    }
+    
     private String displayFilteredProjectIssues (WebDriver driver, int pageSize, int page, int projectId) throws ProjectNotFoundException, PageDoesNotExistException {
         // Select project
         String projectName = selectProjectFilter(driver, projectId);
@@ -216,7 +388,6 @@ public class IssuesServiceImpl implements IssuesService {
         }
         return projectName;
     }
-    
     
     private int getTotalIssues (WebDriver driver) {
         WebElement buglist       = driver.findElement(By.id("buglist"));
@@ -264,6 +435,14 @@ public class IssuesServiceImpl implements IssuesService {
         } catch (NoSuchElementException e) {
             driver.quit();
             throw new ProjectNotFoundException("Project with id " + projectFilter + " not found");
+        }
+    }
+    
+    private boolean isNotNullAndDifferent (Issue old, Issue edit, Field field) {
+        try {
+            return field.get(edit) != null && !field.get(edit).equals(field.get(old));
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 }
