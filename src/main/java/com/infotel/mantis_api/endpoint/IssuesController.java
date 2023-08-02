@@ -2,6 +2,7 @@ package com.infotel.mantis_api.endpoint;
 
 import com.infotel.mantis_api.exception.FieldNotFoundException;
 import com.infotel.mantis_api.model.Issue;
+import com.infotel.mantis_api.model.Note;
 import com.infotel.mantis_api.service.IssuesService;
 import com.infotel.mantis_api.service.IssuesServiceImpl;
 import org.springframework.http.HttpStatus;
@@ -66,5 +67,16 @@ public class IssuesController {
         }
 
         // Dans le catch, throw ResponseStatusException avec BAD_REQUEST pcq l'utilisateur a mal rempli
+    }
+
+    @PostMapping("/{id}/note")
+    public void addNote(@PathVariable("id") int id,@RequestBody Note note) {
+
+        String noteField = note.getNote();
+
+        IssuesService service = new IssuesServiceImpl();
+
+        service.addNote(id, noteField);
+
     }
 }

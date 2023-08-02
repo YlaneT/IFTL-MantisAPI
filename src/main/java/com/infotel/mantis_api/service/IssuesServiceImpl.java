@@ -15,9 +15,9 @@ import java.util.*;
 public class IssuesServiceImpl implements IssuesService {
 
     @Override
-    public Issue searchIssue (int id) {
+    public Issue searchIssue(int id) {
         WebDriver driver = Authenticator.login();
-        Issue     issue  = new Issue();
+        Issue issue = new Issue();
 
         // FIXME? use url : http://localhost/mantisbt/view.php?id=1
         driver.findElement(By.name("bug_id")).sendKeys(String.valueOf(id));
@@ -39,9 +39,9 @@ public class IssuesServiceImpl implements IssuesService {
     }
 
     @Override
-    public Issue searchIssue (int id, List<String> selectValues) {
+    public Issue searchIssue(int id, List<String> selectValues) {
         WebDriver driver = Authenticator.login();
-        Issue     issue  = new Issue();
+        Issue issue = new Issue();
 
         // FIXME? use url : http://localhost/mantisbt/view.php?id=1
         driver.findElement(By.name("bug_id")).sendKeys(String.valueOf(id));
@@ -69,15 +69,15 @@ public class IssuesServiceImpl implements IssuesService {
         issueTab.put("steps", () -> issue.setStepsToReproduce(extractStepsToReproduce(driver)));
         issueTab.put("additional info", () -> issue.setAdditionalInformation(extractAdditionalInformation(driver)));
 
-        for(String selected : selectValues) {
+        for (String selected : selectValues) {
             if (issueTab.containsKey(selected.toLowerCase())) {
                 issueTab.get(selected.toLowerCase());
             } else {
                 try {
                     WebElement customFieldElem =
-                        driver.findElement(By.xpath("//td[text()='"+selected+"' and @class='category']"));
-                    WebElement   customFieldValElem =
-                        customFieldElem.findElement(By.xpath("./following-sibling::td"));
+                            driver.findElement(By.xpath("//td[text()='" + selected + "' and @class='category']"));
+                    WebElement customFieldValElem =
+                            customFieldElem.findElement(By.xpath("./following-sibling::td"));
 
                     issue.getCustomFields().put(customFieldElem.getText(), customFieldValElem.getText());
                 } catch (NoSuchElementException e) {
@@ -96,7 +96,7 @@ public class IssuesServiceImpl implements IssuesService {
 
     /**
      * @param pageSize number of issues per page
-     * @param page number of the page shown
+     * @param page     number of the page shown
      * @return recap of all issues on the page
      */
     private List<Issue> searchAllIssues(int pageSize, int page) {
@@ -132,7 +132,7 @@ public class IssuesServiceImpl implements IssuesService {
             issue.setSummary(strColumns.get(10));
 
 
-            String date = buglist.findElement(By.xpath("//tr["+ (i+1) + "]/td[" + 10 + "]")).getText();
+            String date = buglist.findElement(By.xpath("//tr[" + (i + 1) + "]/td[" + 10 + "]")).getText();
             issue.setLastUpdated(LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
 
             issues.add(issue);
@@ -142,13 +142,13 @@ public class IssuesServiceImpl implements IssuesService {
     }
 
     /**
-     * @param pageSize number of issues per page
-     * @param page number of the page shown
+     * @param pageSize     number of issues per page
+     * @param page         number of the page shown
      * @param selectValues fields to be shown
      * @return selected fields of all issues on the page
      */
     public List<Issue> searchAllIssues(int pageSize, int page, List<String> selectValues) {
-        if (selectValues.isEmpty()){
+        if (selectValues.isEmpty()) {
             return searchAllIssues(pageSize, page);
         }
 
@@ -178,7 +178,7 @@ public class IssuesServiceImpl implements IssuesService {
         for (WebElement row : issueRows) {
             Issue issue = new Issue();
 
-            if(selectValues.contains("id")) {
+            if (selectValues.contains("id")) {
                 WebElement issueId = driver.findElement(By.xpath("//table[3]/tbody/tr[4]/td[4]"));
                 issueId.getText();
                 // issue.setId();
@@ -197,20 +197,6 @@ public class IssuesServiceImpl implements IssuesService {
             issues.add(issue);
         }
 
-
-    /*
-        WebElement issueID = driver.findElement(By.cssSelector("a[href='/mantisbt/view.php?id=3']"));
-        issueID.click();
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        driver.get("http://localhost/mantisbt/view.php?id=3");
-        */
-
         driver.quit();
         return null;
     }
@@ -227,7 +213,7 @@ public class IssuesServiceImpl implements IssuesService {
         Select dropDown = new Select(dropdownCat);
 
         //valeur par defaut
-        if(category.isEmpty()){
+        if (category.isEmpty()) {
             dropDown.selectByValue("1");
         } else {
             dropDown.selectByVisibleText(category);
@@ -236,39 +222,39 @@ public class IssuesServiceImpl implements IssuesService {
         WebElement drpReproducibility = driver.findElement(By.name("reproducibility"));
         Select dropdown = new Select(drpReproducibility);
 
-        if(reproducibility != null && !reproducibility.equals("have not tried")){
+        if (reproducibility != null && !reproducibility.equals("have not tried")) {
             dropdown.selectByVisibleText(reproducibility);
         }
 
         WebElement drpSeverity = driver.findElement(By.name("severity"));
         Select drop_down = new Select(drpSeverity);
 
-        if(severity != null & !severity.equals("minor")){
+        if (severity != null && !severity.equals("minor")) {
             drop_down.selectByVisibleText(severity);
         }
 
         WebElement drpPriority = driver.findElement(By.name("priority"));
         Select drp_down = new Select(drpPriority);
 
-        if(priority != null && !priority.equals("normal")){
+        if (priority != null && !priority.equals("normal")) {
             drp_down.selectByVisibleText(priority);
         }
 
         WebElement platformField = driver.findElement(By.id("platform"));
 
-        if(platform.isEmpty()) {
+        if (platform != null && !platform.isEmpty()) {
             platformField.sendKeys(platform);
         }
 
         WebElement osField = driver.findElement(By.id("os"));
 
-        if(os.isEmpty()){
+        if (os != null && !os.isEmpty()) {
             osField.sendKeys(os);
         }
 
         WebElement osVersionField = driver.findElement(By.id("os_build"));
 
-        if(osVersion.isEmpty()){
+        if (osVersion != null && !osVersion.isEmpty()) {
             osVersionField.sendKeys(osVersion);
         }
 
@@ -277,42 +263,43 @@ public class IssuesServiceImpl implements IssuesService {
         WebElement drpAssigned = driver.findElement(By.name("handler_id"));
         Select drpDown = new Select(drpAssigned);
 
-        if(assigned.isEmpty()) {
-            drpDown.selectByValue("1");
+        if (assigned == null || assigned.isEmpty()) {
+            drpDown.selectByValue("0");
         } else {
             drpDown.selectByVisibleText(assigned);
         }
 
         WebElement summaryField = driver.findElement(By.name("summary"));
 
-        if(summary.isEmpty()) {
-          //  driver.get("http://localhost/mantisbt/bug_report_page.php");
-            throw new FieldNotFoundException("Summary empty / not found");
-            // TODO: throw new FieldNotFoundException("Summary empty / not found")
+        if (summary != null && !summary.isEmpty()) {
+            summaryField.sendKeys(description);
         } else {
-            summaryField.sendKeys(summary);
+            // TODO: throw new FieldNotFoundException("Description empty / not found")
+            // driver.get("http://localhost/mantisbt/bug_report_page.php");
+            Exception e = new Exception();
+            throw new FieldNotFoundException("Summary empty / not found", e);
         }
 
         WebElement descriptionField = driver.findElement(By.name("description"));
 
-        if(description.isEmpty()) {
+        if (description != null && !description.isEmpty()) {
+            descriptionField.sendKeys(description);
+        } else {
             // TODO: throw new FieldNotFoundException("Description empty / not found")
-          //  driver.get("http://localhost/mantisbt/bug_report_page.php");
+            // driver.get("http://localhost/mantisbt/bug_report_page.php");
             Exception e = new Exception();
             throw new FieldNotFoundException("Description empty / not found", e);
-        } else {
-            descriptionField.sendKeys(description);
         }
 
         WebElement stepstoreproduceField = driver.findElement(By.name("steps_to_reproduce"));
 
-        if(!stepsToReproduce.isEmpty()){
+        if (stepsToReproduce != null && !stepsToReproduce.isEmpty()) {
             stepstoreproduceField.sendKeys(stepsToReproduce);
         }
 
         WebElement additionalField = driver.findElement(By.name("additional_info"));
 
-        if(!additionalInformation.isEmpty()){
+        if (additionalInformation != null && !additionalInformation.isEmpty()) {
             additionalField.sendKeys(additionalInformation);
         }
 
@@ -321,7 +308,22 @@ public class IssuesServiceImpl implements IssuesService {
 
     }
 
-    private void extractAllMandatoryFields (Issue issue, WebDriver driver) {
+
+    public void addNote(int id, String note) {
+
+        WebDriver driver = Authenticator.login();
+
+        driver.get("http://localhost/mantisbt/view.php?id=" + id);
+        driver.findElement(By.name("bugnote_text")).sendKeys(note);
+
+        WebElement noteBtn = driver.findElement(By.xpath("//input[@value='Add Note']"));
+        noteBtn.click();
+
+        driver.quit();
+    }
+
+
+    private void extractAllMandatoryFields(Issue issue, WebDriver driver) {
         issue.setId(extractId(driver));
         issue.setProject(extractProject(driver));
         issue.setCategory(extractCategory(driver));
@@ -343,98 +345,98 @@ public class IssuesServiceImpl implements IssuesService {
         issue.setTags(extractTags(driver));
     }
 
-    private void extractAllOptionalFields (Issue issue, WebDriver driver) {
+    private void extractAllOptionalFields(Issue issue, WebDriver driver) {
         issue.setStepsToReproduce(extractStepsToReproduce(driver));
         issue.setAdditionalInformation(extractAdditionalInformation(driver));
     }
 
-    private String extractFromIssueTab (WebDriver driver, int x, int y) {
+    private String extractFromIssueTab(WebDriver driver, int x, int y) {
         return driver.findElement(By.xpath("//table[3]/tbody/tr[" + x + "]/td[" + y + "]")).getText();
     }
 
-    private String extractId (WebDriver driver) {
+    private String extractId(WebDriver driver) {
         return extractFromIssueTab(driver, 3, 1);
     }
 
-    private String extractProject (WebDriver driver) {
+    private String extractProject(WebDriver driver) {
         return extractFromIssueTab(driver, 3, 2);
     }
 
-    private String extractCategory (WebDriver driver) {
+    private String extractCategory(WebDriver driver) {
         return extractFromIssueTab(driver, 3, 3);
     }
 
-    private String extractViewStatus (WebDriver driver) {
+    private String extractViewStatus(WebDriver driver) {
         return extractFromIssueTab(driver, 3, 4);
     }
 
-    private LocalDateTime extractSubmitted (WebDriver driver) {
+    private LocalDateTime extractSubmitted(WebDriver driver) {
         String submittedStr = extractFromIssueTab(driver, 3, 5);
         return parseDate(submittedStr);
     }
 
-    private LocalDateTime extractUpdated (WebDriver driver) {
+    private LocalDateTime extractUpdated(WebDriver driver) {
         String updatedStr = extractFromIssueTab(driver, 3, 6);
         return parseDate(updatedStr);
     }
 
-    private String extractReporter (WebDriver driver) {
+    private String extractReporter(WebDriver driver) {
         return extractFromIssueTab(driver, 5, 2);
     }
 
-    private String extractAssigned (WebDriver driver) {
+    private String extractAssigned(WebDriver driver) {
         return extractFromIssueTab(driver, 6, 2);
     }
 
-    private String extractPriority (WebDriver driver) {
+    private String extractPriority(WebDriver driver) {
         return extractFromIssueTab(driver, 7, 2);
     }
 
-    private String extractSeverity (WebDriver driver) {
+    private String extractSeverity(WebDriver driver) {
         return extractFromIssueTab(driver, 7, 4);
     }
 
-    private String extractReproducibility (WebDriver driver) {
+    private String extractReproducibility(WebDriver driver) {
         return extractFromIssueTab(driver, 7, 6);
     }
 
-    private String extractStatus (WebDriver driver) {
+    private String extractStatus(WebDriver driver) {
         return extractFromIssueTab(driver, 8, 2);
     }
 
-    private String extractResolution (WebDriver driver) {
+    private String extractResolution(WebDriver driver) {
         return extractFromIssueTab(driver, 8, 4);
     }
 
-    private String extractPlatform (WebDriver driver) {
+    private String extractPlatform(WebDriver driver) {
         return extractFromIssueTab(driver, 9, 2);
     }
 
-    private String extractOs (WebDriver driver) {
+    private String extractOs(WebDriver driver) {
         return extractFromIssueTab(driver, 9, 4);
     }
 
-    private String extractOsVersion (WebDriver driver) {
+    private String extractOsVersion(WebDriver driver) {
         return extractFromIssueTab(driver, 9, 6);
     }
 
-    private String extractSummary (WebDriver driver) {
+    private String extractSummary(WebDriver driver) {
         return extractFromIssueTab(driver, 11, 2);
     }
 
-    private String extractDescription (WebDriver driver) {
+    private String extractDescription(WebDriver driver) {
         return extractFromIssueTab(driver, 12, 2);
     }
 
-    private List<String> extractTags (WebDriver driver) {
+    private List<String> extractTags(WebDriver driver) {
         WebElement tagsCategoryElement = driver.findElement(By.xpath("//td[text()='Tags' and @class='category']"));
         // Find immediate sibling of Tags header
-        WebElement   tagsValueElement = tagsCategoryElement.findElement(By.xpath("./following-sibling::td"));
-        List<String> tags             = new ArrayList<>();
+        WebElement tagsValueElement = tagsCategoryElement.findElement(By.xpath("./following-sibling::td"));
+        List<String> tags = new ArrayList<>();
         if (!tagsValueElement.getText().equals("No tags attached.")) {
             // Extract links containing text, not delete cross
             List<WebElement> links = tagsValueElement.findElements(By.cssSelector("a"));
-            for(int i = 0 ; i < links.size() ; i += 2) {
+            for (int i = 0; i < links.size(); i += 2) {
                 tags.add(links.get(i).getText());
             }
         }
@@ -442,24 +444,23 @@ public class IssuesServiceImpl implements IssuesService {
     }
 
 
-    private String extractStepsToReproduce (WebDriver driver) {
+    private String extractStepsToReproduce(WebDriver driver) {
         try {
             WebElement strTitle =
-                driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and " + "@class='category']"));
-            WebElement strElement       = strTitle.findElement(By.xpath("./following-sibling::td"));
-            String     stepsToReproduce = strElement.getText();
-            return stepsToReproduce;
+                    driver.findElement(By.xpath("//td[text()='Steps To Reproduce' and " + "@class='category']"));
+            WebElement strElement = strTitle.findElement(By.xpath("./following-sibling::td"));
+            return strElement.getText();
         } catch (NoSuchElementException e) {
             System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
             return null;
         }
     }
 
-    private String extractAdditionalInformation (WebDriver driver) {
+    private String extractAdditionalInformation(WebDriver driver) {
         try {
             WebElement aiTitle =
-                driver.findElement(By.xpath("//td[text()='Additional Information' and " + "@class" + "='category']"));
-            WebElement strElement            = aiTitle.findElement(By.xpath("./following-sibling::td"));
+                    driver.findElement(By.xpath("//td[text()='Additional Information' and " + "@class" + "='category']"));
+            WebElement strElement = aiTitle.findElement(By.xpath("./following-sibling::td"));
             return strElement.getText();
         } catch (NoSuchElementException e) {
             System.err.println(e.getClass().getSimpleName() + " : No additional information.");

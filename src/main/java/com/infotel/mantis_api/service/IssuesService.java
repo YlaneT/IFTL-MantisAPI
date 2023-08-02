@@ -19,4 +19,6 @@ public interface IssuesService {
                       String priority, String platform, String os,
                       String osVersion, String assigned, String summary, String description,
                       String stepsToReproduce, String additionalInformation) throws FieldNotFoundException;
+
+    public void addNote(int id, String note);
 }
