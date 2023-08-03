@@ -13,7 +13,7 @@ import java.util.List;
  * issue recap being {baseUrl}/view_all_bug_page.php
  */
 public class IssueRecap {
-    public static Issue extractAndSetFullRecap (WebElement issueRow) {
+    public static Issue extractAndSetFullRecap (WebElement issueRow, String projectName) {
         Issue issue = new Issue();
         
         List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
@@ -28,6 +28,7 @@ public class IssueRecap {
         extractAndSetLastUpdated(issue, issueCol);
         extractAndSetSummary(issue, issueCol);
         
+        issue.setProject(projectName);
         
         return issue;
     }
@@ -45,16 +46,14 @@ public class IssueRecap {
     
     public static void extractAndSetNoteCount (Issue issue, List<WebElement> issueCol) {
         String noteCountStr = issueCol.get(4).getText();
-        if (!noteCountStr.isBlank()) {
-            issue.setNoteCount(Integer.parseInt(noteCountStr));
-        }
+        int noteCount = noteCountStr.isBlank() ? 0 : Integer.parseInt(noteCountStr);
+        issue.setNoteCount(noteCount);
     }
     
     public static void extractAndSetAttachmentCount (Issue issue, List<WebElement> issueCol) {
         String attachmentCountStr = issueCol.get(5).getText();
-        if (!attachmentCountStr.isBlank()) {
-            issue.setAttachmentCount(Integer.parseInt(attachmentCountStr));
-        }
+        int attachmentCount = attachmentCountStr.isBlank() ? 0 : Integer.parseInt(attachmentCountStr);
+        issue.setAttachmentCount(attachmentCount);
     }
     
     public static void extractAndSetCategory (Issue issue, List<WebElement> issueCol) {
@@ -70,7 +69,8 @@ public class IssueRecap {
     }
     
     public static void extractAndSetLastUpdated (Issue issue, List<WebElement> issueCol) {
-        issue.setLastUpdated(LocalDate.parse(issueCol.get(9).getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
+        issue.setLastUpdated(
+            LocalDate.parse(issueCol.get(9).getText(), DateTimeFormatter.ofPattern("yyyy-MM-dd")).atStartOfDay());
     }
     
     public static void extractAndSetSummary (Issue issue, List<WebElement> issueCol) {

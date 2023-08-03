@@ -2,6 +2,8 @@ package com.infotel.mantis_api.util.extract_from;
 
 import com.infotel.mantis_api.exception.IssueFileNotFound;
 import com.infotel.mantis_api.model.Issue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
 
 import java.time.LocalDateTime;
@@ -15,6 +17,9 @@ import java.util.List;
  * issue details being {baseUrl}/view.php?id={id}
  */
 public class IssueDetails {
+    
+    private static final Logger log = LogManager.getLogger(IssueDetails.class);
+    
     public static void extractAndSetAllMandatoryFields (Issue issue, WebDriver driver) {
         issue.setId(extractId(driver));
         issue.setProject(extractProject(driver));
@@ -142,7 +147,7 @@ public class IssueDetails {
             WebElement strElement = strTitle.findElement(By.xpath("./following-sibling::td"));
             return strElement.getText();
         } catch (NoSuchElementException e) {
-            System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
+            log.debug(e.getClass().getSimpleName() + " : No steps to reproduce.");
             return null;
         }
     }
@@ -154,7 +159,7 @@ public class IssueDetails {
             WebElement strElement = aiTitle.findElement(By.xpath("./following-sibling::td"));
             return strElement.getText();
         } catch (NoSuchElementException e) {
-            System.err.println(e.getClass().getSimpleName() + " : No additional information.");
+            log.debug(e.getClass().getSimpleName() + " : No additional information.");
             return null;
         }
     }
@@ -187,8 +192,29 @@ public class IssueDetails {
         List<WebElement> fileLinks = filesElement.findElements(By.xpath("//a[text()='^']"));
         for(WebElement linkElement : fileLinks) {
             String hrefValue = linkElement.getAttribute("href");
-            if (hrefValue.contains("id=" + fileId + "&")){
+            if (hrefValue.contains("id=" + fileId + "&")) {
                 return hrefValue;
+            }
+        }
+        driver.quit();
+        throw new IssueFileNotFound("Issue file with id " + fileId + " not found");
+    }
+    
+    public static WebElement ExtractDeleteFileButton (WebDriver driver, int fileId) throws IssueFileNotFound {
+        WebElement f1           = driver.findElement(By.id("attachments"));
+        WebElement f2           = f1.findElement(By.xpath("./parent::td"));
+        WebElement filesElement = f2.findElement(By.xpath("./following-sibling::td"));
+        
+        if (filesElement.getText().isEmpty()) {
+            driver.quit();
+            throw new IssueFileNotFound("Issue file with id " + fileId + " not found");
+        }
+        
+        List<WebElement> fileLinks = filesElement.findElements(By.xpath("//a[text()='Delete']"));
+        for(WebElement linkElement : fileLinks) {
+            String hrefValue = linkElement.getAttribute("href");
+            if (hrefValue.contains("id=" + fileId + "&")) {
+                return linkElement;
             }
         }
         driver.quit();
