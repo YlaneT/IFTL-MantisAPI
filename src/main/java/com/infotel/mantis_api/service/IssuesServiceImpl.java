@@ -68,29 +68,30 @@ public class IssuesServiceImpl implements IssuesService {
         
         driver.get(baseUrl + "/view.php?id=" + id);
         
-        Map<String, Runnable> issueTab = new HashMap<>();
-        issueTab.put("id", () -> issue.setId(IssueDetails.extractId(driver)));
-        issueTab.put("project", () -> issue.setProject(IssueDetails.extractProject(driver)));
-        issueTab.put("category", () -> issue.setCategory(IssueDetails.extractCategory(driver)));
-        issueTab.put("view status", () -> issue.setViewStatus(IssueDetails.extractViewStatus(driver)));
-        issueTab.put("submitted", () -> issue.setSubmitted(IssueDetails.extractSubmitted(driver)));
-        issueTab.put("updated", () -> issue.setLastUpdated(IssueDetails.extractUpdated(driver)));
-        issueTab.put("reporter", () -> issue.setReporter(IssueDetails.extractReporter(driver)));
-        issueTab.put("assigned", () -> issue.setAssigned(IssueDetails.extractAssigned(driver)));
-        issueTab.put("priority", () -> issue.setPriority(IssueDetails.extractPriority(driver)));
-        issueTab.put("severity", () -> issue.setSeverity(IssueDetails.extractSeverity(driver)));
-        issueTab.put("reproducibility", () -> issue.setReproducibility(IssueDetails.extractReproducibility(driver)));
-        issueTab.put("status", () -> issue.setStatus(IssueDetails.extractStatus(driver)));
-        issueTab.put("resolution", () -> issue.setResolution(IssueDetails.extractResolution(driver)));
-        issueTab.put("platform", () -> issue.setPlatform(IssueDetails.extractPlatform(driver)));
-        issueTab.put("os", () -> issue.setOs(IssueDetails.extractOs(driver)));
-        issueTab.put("os version", () -> issue.setOsVersion(IssueDetails.extractOsVersion(driver)));
-        issueTab.put("summary", () -> issue.setSummary(IssueDetails.extractSummary(driver)));
-        issueTab.put("description", () -> issue.setDescription(IssueDetails.extractDescription(driver)));
-        issueTab.put("tags", () -> issue.setTags(IssueDetails.extractTags(driver)));
-        issueTab.put("steps", () -> issue.setStepsToReproduce(IssueDetails.extractStepsToReproduce(driver)));
-        issueTab.put("additional info",
-            () -> issue.setAdditionalInformation(IssueDetails.extractAdditionalInformation(driver)));
+        Map<String, Runnable> issueTab = Map.ofEntries(
+            Map.entry("id", () -> issue.setId(IssueDetails.extractId(driver))),
+            Map.entry("project", () -> issue.setProject(IssueDetails.extractProject(driver))),
+            Map.entry("category", () -> issue.setCategory(IssueDetails.extractCategory(driver))),
+            Map.entry("view status", () -> issue.setViewStatus(IssueDetails.extractViewStatus(driver))),
+            Map.entry("submitted", () -> issue.setSubmitted(IssueDetails.extractSubmitted(driver))),
+            Map.entry("updated", () -> issue.setLastUpdated(IssueDetails.extractUpdated(driver))),
+            Map.entry("reporter", () -> issue.setReporter(IssueDetails.extractReporter(driver))),
+            Map.entry("assigned", () -> issue.setAssigned(IssueDetails.extractAssigned(driver))),
+            Map.entry("priority", () -> issue.setPriority(IssueDetails.extractPriority(driver))),
+            Map.entry("severity", () -> issue.setSeverity(IssueDetails.extractSeverity(driver))),
+            Map.entry("reproducibility", () -> issue.setReproducibility(IssueDetails.extractReproducibility(driver))),
+            Map.entry("status", () -> issue.setStatus(IssueDetails.extractStatus(driver))),
+            Map.entry("resolution", () -> issue.setResolution(IssueDetails.extractResolution(driver))),
+            Map.entry("platform", () -> issue.setPlatform(IssueDetails.extractPlatform(driver))),
+            Map.entry("os", () -> issue.setOs(IssueDetails.extractOs(driver))),
+            Map.entry("os version", () -> issue.setOsVersion(IssueDetails.extractOsVersion(driver))),
+            Map.entry("summary", () -> issue.setSummary(IssueDetails.extractSummary(driver))),
+            Map.entry("description", () -> issue.setDescription(IssueDetails.extractDescription(driver))),
+            Map.entry("tags", () -> issue.setTags(IssueDetails.extractTags(driver))),
+            Map.entry("steps", () -> issue.setStepsToReproduce(IssueDetails.extractStepsToReproduce(driver))),
+            Map.entry("additional info",
+                () -> issue.setAdditionalInformation(IssueDetails.extractAdditionalInformation(driver)))
+        );
         
         for(String selected : selectValues) {
             if (issueTab.containsKey(selected.toLowerCase())) {
@@ -232,9 +233,10 @@ public class IssuesServiceImpl implements IssuesService {
                 field.setAccessible(true);
                 if (isNotNullAndDifferent(oldIssue, issue, field)) {
                     String fieldName = field.getName();
-                    List<String> uneditable = Arrays.asList("id", "project", "submitted", "lastUpdated", "noteCount",
-                        "attachmentCount", "tags");
-                    if (!uneditable.contains(fieldName)) {
+                    List<String> editable = Arrays.asList("category", "viewStatus", "reporter", "assigned", "priority",
+                        "severity", "reproducibility", "status", "resolution", "platform", "os", "osVersion", "summary",
+                        "description", "stepsToReproduce", "additionalInformation", "customFields");
+                    if (editable.contains(fieldName)) {
                         String content = fieldName.equals("customFields") ? "" : (String) field.get(issue);
                         switch (fieldName) {
                             case "category" -> {
