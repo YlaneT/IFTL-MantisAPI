@@ -54,7 +54,7 @@ public class IssueFilesServiceImpl implements IssueFilesService {
     public void deleteIssueFile (int issueId, int fileId) throws IssueNotFoundException, IssueFileNotFound {
         WebDriver driver = auth.login();
         
-        driver.get("http://localhost/mantisbt/view.php?id=" + issueId);
+        driver.get(baseUrl + "/view.php?id=" + issueId);
         try {
             IssueDetails.ExtractDeleteFileButton(driver, fileId).click();
         } catch (NoSuchElementException e) {

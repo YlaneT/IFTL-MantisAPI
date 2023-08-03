@@ -15,10 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.lang.reflect.Field;
 import java.util.*;
 
 import static com.infotel.mantis_api.util.edit.EditIssue.*;
@@ -37,6 +36,10 @@ public class IssuesServiceImpl implements IssuesService {
     Authenticator auth;
     @Value("${mantis.base-url}")
     private String baseUrl;
+    
+    private static LocalDateTime parseDate (String date) {
+        return LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+    }
     
     @Override
     public Issue searchIssue (int id) throws IssueNotFoundException {
@@ -106,8 +109,7 @@ public class IssuesServiceImpl implements IssuesService {
                     driver.quit();
                     throw new IssueNotFoundException(message);
                 }
-            }
-            else {
+            } else {
                 try {
                     String     xPath              = "//td[text()='" + selected + "' and @class='category']";
                     WebElement customFieldElem    = driver.findElement(By.xpath(xPath));
@@ -157,8 +159,7 @@ public class IssuesServiceImpl implements IssuesService {
             
             if (selectValues.size() == 0) {
                 issues.add(IssueRecap.extractAndSetFullRecap(issueRow, projectName));
-            }
-            else {
+            } else {
                 List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
                 
                 Issue issue = new Issue();
@@ -327,13 +328,13 @@ public class IssuesServiceImpl implements IssuesService {
                                 editOs(driver, verifyInput(content, MAX_PLATFORM_LENGTH));
                             }
                             case "osVersion" -> {
-                                if ((content).length() > MAX_OS_VERSION_LENGTH) {
+                                if (content.length() > MAX_OS_VERSION_LENGTH) {
                                     errors.add("OS version too long (max " + MAX_OS_VERSION_LENGTH + " characters)");
                                 }
                                 editOsVersion(driver, verifyInput(content, MAX_OS_VERSION_LENGTH));
                             }
                             case "summary" -> {
-                                if ((content).length() > MAX_SUMMARY_LENGTH) {
+                                if (content.length() > MAX_SUMMARY_LENGTH) {
                                     errors.add("Summary too long (max " + MAX_SUMMARY_LENGTH + " characters)");
                                 }
                                 editSummary(driver, verifyInput(content, MAX_SUMMARY_LENGTH));
@@ -377,118 +378,161 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public void createIssue(String category, String reproducibility, String severity,
-                            String priority, String platform, String os,
-                            String osVersion, String assigned, String summary, String description,
-                            String stepsToReproduce, String additionalInformation) throws FieldNotFoundException {
-
+    public String createIssue (
+        String category, String reproducibility, String severity,
+        String priority, String platform, String os,
+        String osVersion, String assigned, String summary, String description,
+        String stepsToReproduce, String additionalInformation
+    ) throws FieldNotFoundException {
+        
         WebDriver driver = auth.login();
-        driver.get("http://localhost/mantisbt/bug_report_page.php");
-
+        driver.get(baseUrl + "/bug_report_page.php");
+        
         WebElement dropdownCat = driver.findElement(By.name("category_id"));
-        Select dropDown = new Select(dropdownCat);
-
-        //valeur par defaut
-        if (category.isEmpty()) {
-            dropDown.selectByValue("1");
-        } else {
+        Select     dropDown    = new Select(dropdownCat);
+        
+        String       returnMessage = "Issue was created";
+        List<String> errors        = new ArrayList<>();
+        
+        try {
+            if (category == null || category.isEmpty()) {
+                driver.quit();
+                throw new FieldNotFoundException("Category is empty");
+            }
             dropDown.selectByVisibleText(category);
+        } catch (NoSuchElementException e) {
+            driver.quit();
+            throw new FieldNotFoundException("Category \"%s\" doesn't exist".formatted(category));
         }
-
+        
         WebElement drpReproducibility = driver.findElement(By.name("reproducibility"));
-        Select dropdown = new Select(drpReproducibility);
-
-        if (reproducibility != null && !reproducibility.equals("have not tried")) {
-            dropdown.selectByVisibleText(reproducibility);
+        Select     dropdown           = new Select(drpReproducibility);
+        
+        try {
+            if (reproducibility != null && !reproducibility.equals("have not tried")) {
+                dropdown.selectByVisibleText(reproducibility);
+            }
+        } catch (NoSuchElementException e) {
+            String e_msg = "Reproducibility \"%s\" doesn't exist".formatted(reproducibility);
+            errors.add(e_msg);
+            log.warn(e_msg);
         }
-
+        
         WebElement drpSeverity = driver.findElement(By.name("severity"));
-        Select drop_down = new Select(drpSeverity);
-
-        if (severity != null && !severity.equals("minor")) {
-            drop_down.selectByVisibleText(severity);
+        Select     drop_down   = new Select(drpSeverity);
+        
+        try {
+            if (severity != null && !severity.equals("minor")) {
+                drop_down.selectByVisibleText(severity);
+            }
+        } catch (NoSuchElementException e) {
+            String e_msg = "Severity \"%s\" doesn't exist".formatted(severity);
+            errors.add(e_msg);
+            log.warn(e_msg);
         }
-
+        
         WebElement drpPriority = driver.findElement(By.name("priority"));
-        Select drp_down = new Select(drpPriority);
-
-        if (priority != null && !priority.equals("normal")) {
-            drp_down.selectByVisibleText(priority);
+        Select     drp_down    = new Select(drpPriority);
+        
+        try {
+            if (priority != null && !priority.equals("normal")) {
+                drp_down.selectByVisibleText(priority);
+            }
+        } catch (NoSuchElementException e) {
+            String e_msg = "Priority \"%s\" doesn't exist".formatted(priority);
+            errors.add(e_msg);
+            log.warn(e_msg);
         }
-
-        WebElement platformField = driver.findElement(By.id("platform"));
-
+        
         if (platform != null && !platform.isEmpty()) {
-            platformField.sendKeys(platform);
+            if (platform.length() > MAX_PLATFORM_LENGTH) {
+                String e_msg = "Platform too long (max " + MAX_PLATFORM_LENGTH + " characters)";
+                errors.add(e_msg);
+                log.warn(e_msg);
+            }
+            editPlatform(driver, verifyInput(platform, MAX_PLATFORM_LENGTH));
         }
-
-        WebElement osField = driver.findElement(By.id("os"));
-
+        
         if (os != null && !os.isEmpty()) {
-            osField.sendKeys(os);
+            if (os.length() > MAX_OS_LENGTH) {
+                String e_msg = "OS too long (max " + MAX_OS_LENGTH + " characters)";
+                errors.add(e_msg);
+                log.warn(e_msg);
+            }
+            editOs(driver, verifyInput(os, MAX_PLATFORM_LENGTH));
         }
-
-        WebElement osVersionField = driver.findElement(By.id("os_build"));
-
+        
         if (osVersion != null && !osVersion.isEmpty()) {
-            osVersionField.sendKeys(osVersion);
+            if (osVersion.length() > MAX_OS_VERSION_LENGTH) {
+                String e_msg = "OS version too long (max " + MAX_OS_VERSION_LENGTH + " characters)";
+                errors.add(e_msg);
+                log.warn(e_msg);
+            }
+            editOsVersion(driver, verifyInput(osVersion, MAX_OS_VERSION_LENGTH));
         }
-
-        WebElement drpAssigned = driver.findElement(By.name("handler_id"));
-        Select drpDown = new Select(drpAssigned);
-
+        
         if (assigned == null || assigned.isEmpty()) {
-            drpDown.selectByValue("0");
+            new Select(driver.findElement(By.name("handler_id"))).selectByValue("0");
         } else {
-            drpDown.selectByVisibleText(assigned);
+            try {
+                editAssigned(driver, assigned);
+            } catch (FieldNotFoundException e) {
+                errors.add(e.getMessage());
+                log.warn(e.getMessage());
+            }
         }
-
-        WebElement summaryField = driver.findElement(By.name("summary"));
-
+        
         if (summary != null && !summary.isEmpty()) {
-            summaryField.sendKeys(description);
+            if (summary.length() > MAX_SUMMARY_LENGTH) {
+                String e_msg = "Summary too long (max " + MAX_SUMMARY_LENGTH + " characters)";
+                errors.add(e_msg);
+                log.warn(e_msg);
+            }
+            editSummary(driver, verifyInput(summary, MAX_SUMMARY_LENGTH));
         } else {
-            Exception e = new Exception();
-            throw new FieldNotFoundException("Summary empty / not found", e);
+            driver.quit();
+            throw new FieldNotFoundException("Summary empty or not found");
         }
-
+        
+        
         WebElement descriptionField = driver.findElement(By.name("description"));
-
+        
         if (description != null && !description.isEmpty()) {
             descriptionField.sendKeys(description);
         } else {
-            Exception e = new Exception();
-            throw new FieldNotFoundException("Description empty / not found", e);
+            driver.quit();
+            throw new FieldNotFoundException("Description empty or not found");
         }
-
-        WebElement stepstoreproduceField = driver.findElement(By.name("steps_to_reproduce"));
-
+        
         if (stepsToReproduce != null && !stepsToReproduce.isEmpty()) {
-            stepstoreproduceField.sendKeys(stepsToReproduce);
+            editStepsToReproduce(driver, stepsToReproduce);
         }
-
+        
         WebElement additionalField = driver.findElement(By.name("additional_info"));
-
         if (additionalInformation != null && !additionalInformation.isEmpty()) {
             additionalField.sendKeys(additionalInformation);
         }
-
-        WebElement submitButton = driver.findElement(By.className("button"));
-        submitButton.click();
-
+        
+        driver.findElement(By.xpath("//input[@value='Submit Report']")).click();
+        
+        driver.quit();
+        if (!errors.isEmpty()) {
+            returnMessage = returnMessage + " with errors: " + String.join(", ", errors);
+        }
+        return returnMessage;
     }
-
+    
     @Override
-    public void addNote(int id, String note) {
-
+    public void addNote (int id, String note) {
+        
         WebDriver driver = auth.login();
-
-        driver.get("http://localhost/mantisbt/view.php?id=" + id);
+        
+        driver.get(baseUrl + "/view.php?id=" + id);
         driver.findElement(By.name("bugnote_text")).sendKeys(note);
-
+        
         WebElement noteBtn = driver.findElement(By.xpath("//input[@value='Add Note']"));
         noteBtn.click();
-
+        
         driver.quit();
     }
     
@@ -509,8 +553,8 @@ public class IssuesServiceImpl implements IssuesService {
         }
         return projectName;
     }
-
-    private void extractAllMandatoryFields(Issue issue, WebDriver driver) {
+    
+    private void extractAllMandatoryFields (Issue issue, WebDriver driver) {
         issue.setId(extractId(driver));
         issue.setProject(extractProject(driver));
         issue.setCategory(extractCategory(driver));
@@ -632,9 +676,9 @@ public class IssuesServiceImpl implements IssuesService {
     
     private String extractStepsToReproduce (WebDriver driver) {
         try {
-            String xPath = "//td[text()='Steps To Reproduce' and @class='category']";
-            WebElement strTitle = driver.findElement(By.xpath(xPath));
-            WebElement strElement       = strTitle.findElement(By.xpath("./following-sibling::td"));
+            String     xPath      = "//td[text()='Steps To Reproduce' and @class='category']";
+            WebElement strTitle   = driver.findElement(By.xpath(xPath));
+            WebElement strElement = strTitle.findElement(By.xpath("./following-sibling::td"));
             return strElement.getText();
         } catch (NoSuchElementException e) {
             System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
@@ -709,9 +753,5 @@ public class IssuesServiceImpl implements IssuesService {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-    }
-    
-    private static LocalDateTime parseDate (String date) {
-        return LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
 }

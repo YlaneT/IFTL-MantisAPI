@@ -76,7 +76,7 @@ public class IssuesController {
     
     @PostMapping("/new")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createIssue (@RequestBody Issue issue) {
+    public String createIssue (@RequestBody Issue issue) {
         log.info("ENDPOINT Create issue");
         String category              = issue.getCategory();
         String reproducibility       = issue.getReproducibility();
@@ -92,9 +92,10 @@ public class IssuesController {
         String additionalInformation = issue.getAdditionalInformation();
         
         try {
-            service.createIssue(category, reproducibility, severity, priority, platform,
+            return service.createIssue(category, reproducibility, severity, priority, platform,
                 os, osVersion, assigned, summary, description, stepsToReproduce, additionalInformation);
         } catch (FieldNotFoundException e) {
+            log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
     }
