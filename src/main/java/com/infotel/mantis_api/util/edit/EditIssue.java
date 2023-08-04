@@ -1,5 +1,6 @@
 package com.infotel.mantis_api.util.edit;
 
+import com.infotel.mantis_api.exception.AccessDenied;
 import com.infotel.mantis_api.exception.FieldNotFoundException;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.*;
@@ -80,8 +81,13 @@ public class EditIssue {
         }
     }
     
-    public static void editAssigned (WebDriver driver, String assignee) throws FieldNotFoundException {
-        Select assigneeSelect = new Select(driver.findElement(By.name("handler_id")));
+    public static void editAssigned (WebDriver driver, String assignee) throws FieldNotFoundException, AccessDenied {
+        Select assigneeSelect = null;
+        try {
+            assigneeSelect = new Select(driver.findElement(By.name("handler_id")));
+        } catch (NoSuchElementException e) {
+            throw new AccessDenied("User doesn't have permission to edit assignee.");
+        }
         try {
             assigneeSelect.selectByVisibleText(assignee);
         } catch (NoSuchElementException e1) {
@@ -132,8 +138,13 @@ public class EditIssue {
         }
     }
     
-    public static void editStatus (WebDriver driver, String status) throws FieldNotFoundException {
-        Select statusSelect = new Select(driver.findElement(By.name("status")));
+    public static void editStatus (WebDriver driver, String status) throws FieldNotFoundException, AccessDenied {
+        Select statusSelect = null;
+        try {
+            statusSelect = new Select(driver.findElement(By.name("status")));
+        } catch (NoSuchElementException e) {
+            throw new AccessDenied("User doesn't have permission to edit issue status.");
+        }
         try {
             statusSelect.selectByVisibleText(status);
         } catch (NoSuchElementException e1) {

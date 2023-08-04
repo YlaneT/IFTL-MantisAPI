@@ -221,22 +221,28 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public String editIssue (Issue issue) throws IssueNotFoundException, AccessDenied {
+    public String editIssue (int issue_id, Issue issue) throws IssueNotFoundException, AccessDenied {
         if (issue.getId() == null) {
             throw new IssueNotFoundException("Issue id is null");
         }
         
-        Issue        oldIssue      = searchIssue(Integer.parseInt(issue.getId()));
-        String       returnMessage = "Issue " + issue.getId() + " was edited";
+        Issue        oldIssue      = searchIssue(issue_id);
+        String       returnMessage = "Issue " + issue_id + " was edited";
         List<String> errors        = new ArrayList<>();
         
         WebDriver driver = auth.login();
-        driver.get(baseUrl + "/view.php?id=" + issue.getId());
+        driver.get(baseUrl + "/view.php?id=" + issue_id);
+        // View permissions already verified from using searchIssue()
         
         Class<? extends Issue> clazz  = issue.getClass();
         Field[]                fields = clazz.getDeclaredFields();
         
-        extractEditButton(driver).click();
+        try {
+            extractEditButton(driver).click();
+        } catch (NoSuchElementException e) {
+            driver.quit();
+            throw new AccessDenied("User doesn't have permission to edit issue.");
+        }
         
         try {
             for(Field field : fields) {
@@ -276,7 +282,7 @@ public class IssuesServiceImpl implements IssuesService {
                             case "assigned" -> {
                                 try {
                                     editAssigned(driver, content);
-                                } catch (FieldNotFoundException e) {
+                                } catch (FieldNotFoundException | AccessDenied e) {
                                     errors.add(e.getMessage());
                                     log.warn(e.getMessage());
                                 }
@@ -308,7 +314,7 @@ public class IssuesServiceImpl implements IssuesService {
                             case "status" -> {
                                 try {
                                     editStatus(driver, content);
-                                } catch (FieldNotFoundException e) {
+                                } catch (FieldNotFoundException | AccessDenied e) {
                                     errors.add(e.getMessage());
                                     log.warn(e.getMessage());
                                 }
@@ -482,7 +488,7 @@ public class IssuesServiceImpl implements IssuesService {
         } else {
             try {
                 editAssigned(driver, assigned);
-            } catch (FieldNotFoundException e) {
+            } catch (FieldNotFoundException | AccessDenied e) {
                 errors.add(e.getMessage());
                 log.warn(e.getMessage());
             }

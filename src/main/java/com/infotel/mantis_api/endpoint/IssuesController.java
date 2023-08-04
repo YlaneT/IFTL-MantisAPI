@@ -70,7 +70,7 @@ public class IssuesController {
     public String editIssue (@PathVariable("id") int id, @RequestBody Issue issue) {
         log.info("ENDPOINT Edit issue with parameter id=\"%d\"".formatted(id));
         try {
-            return service.editIssue(issue);
+            return service.editIssue(id, issue);
         } catch (IssueNotFoundException | ClassCastException e) {
             log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
