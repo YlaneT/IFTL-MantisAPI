@@ -16,8 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.infotel.mantis_api.util.edit.EditIssue.*;
@@ -36,10 +34,6 @@ public class IssuesServiceImpl implements IssuesService {
     Authenticator auth;
     @Value("${mantis.base-url}")
     private String baseUrl;
-    
-    private static LocalDateTime parseDate (String date) {
-        return LocalDateTime.parse(date, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-    }
     
     @Override
     public Issue searchIssue (int id) throws IssueNotFoundException {
@@ -552,150 +546,6 @@ public class IssuesServiceImpl implements IssuesService {
             driver.get(baseUrl + "/view_all_bug_page.php?page_number=" + page);
         }
         return projectName;
-    }
-    
-    private void extractAllMandatoryFields (Issue issue, WebDriver driver) {
-        issue.setId(extractId(driver));
-        issue.setProject(extractProject(driver));
-        issue.setCategory(extractCategory(driver));
-        issue.setViewStatus(extractViewStatus(driver));
-        issue.setSubmitted(extractSubmitted(driver));
-        issue.setLastUpdated(extractUpdated(driver));
-        issue.setReporter(extractReporter(driver));
-        issue.setAssigned(extractAssigned(driver));
-        issue.setPriority(extractPriority(driver));
-        issue.setSeverity(extractSeverity(driver));
-        issue.setReproducibility(extractReproducibility(driver));
-        issue.setStatus(extractStatus(driver));
-        issue.setResolution(extractResolution(driver));
-        issue.setPlatform(extractPlatform(driver));
-        issue.setOs(extractOs(driver));
-        issue.setOsVersion(extractOsVersion(driver));
-        issue.setSummary(extractSummary(driver));
-        issue.setDescription(extractDescription(driver));
-        issue.setTags(extractTags(driver));
-    }
-    
-    private void extractAllOptionalFields (Issue issue, WebDriver driver) {
-        issue.setStepsToReproduce(extractStepsToReproduce(driver));
-        issue.setAdditionalInformation(extractAdditionalInformation(driver));
-    }
-    
-    private String extractFromIssueTab (WebDriver driver, int x, int y) {
-        return driver.findElement(By.xpath("//table[3]/tbody/tr[" + x + "]/td[" + y + "]")).getText();
-    }
-    
-    private String extractId (WebDriver driver) {
-        return extractFromIssueTab(driver, 3, 1);
-    }
-    
-    private String extractProject (WebDriver driver) {
-        return extractFromIssueTab(driver, 3, 2);
-    }
-    
-    private String extractCategory (WebDriver driver) {
-        return extractFromIssueTab(driver, 3, 3);
-    }
-    
-    private String extractViewStatus (WebDriver driver) {
-        return extractFromIssueTab(driver, 3, 4);
-    }
-    
-    private LocalDateTime extractSubmitted (WebDriver driver) {
-        String submittedStr = extractFromIssueTab(driver, 3, 5);
-        return parseDate(submittedStr);
-    }
-    
-    private LocalDateTime extractUpdated (WebDriver driver) {
-        String updatedStr = extractFromIssueTab(driver, 3, 6);
-        return parseDate(updatedStr);
-    }
-    
-    private String extractReporter (WebDriver driver) {
-        return extractFromIssueTab(driver, 5, 2);
-    }
-    
-    private String extractAssigned (WebDriver driver) {
-        return extractFromIssueTab(driver, 6, 2);
-    }
-    
-    private String extractPriority (WebDriver driver) {
-        return extractFromIssueTab(driver, 7, 2);
-    }
-    
-    private String extractSeverity (WebDriver driver) {
-        return extractFromIssueTab(driver, 7, 4);
-    }
-    
-    private String extractReproducibility (WebDriver driver) {
-        return extractFromIssueTab(driver, 7, 6);
-    }
-    
-    private String extractStatus (WebDriver driver) {
-        return extractFromIssueTab(driver, 8, 2);
-    }
-    
-    private String extractResolution (WebDriver driver) {
-        return extractFromIssueTab(driver, 8, 4);
-    }
-    
-    private String extractPlatform (WebDriver driver) {
-        return extractFromIssueTab(driver, 9, 2);
-    }
-    
-    private String extractOs (WebDriver driver) {
-        return extractFromIssueTab(driver, 9, 4);
-    }
-    
-    private String extractOsVersion (WebDriver driver) {
-        return extractFromIssueTab(driver, 9, 6);
-    }
-    
-    private String extractSummary (WebDriver driver) {
-        return extractFromIssueTab(driver, 11, 2);
-    }
-    
-    private String extractDescription (WebDriver driver) {
-        return extractFromIssueTab(driver, 12, 2);
-    }
-    
-    private List<String> extractTags (WebDriver driver) {
-        WebElement tagsCategoryElement = driver.findElement(By.xpath("//td[text()='Tags' and @class='category']"));
-        // Find immediate sibling of Tags header
-        WebElement   tagsValueElement = tagsCategoryElement.findElement(By.xpath("./following-sibling::td"));
-        List<String> tags             = new ArrayList<>();
-        if (!tagsValueElement.getText().equals("No tags attached.")) {
-            // Extract links containing text, not delete cross
-            List<WebElement> links = tagsValueElement.findElements(By.cssSelector("a"));
-            for(int i = 0 ; i < links.size() ; i += 2) {
-                tags.add(links.get(i).getText());
-            }
-        }
-        return tags;
-    }
-    
-    private String extractStepsToReproduce (WebDriver driver) {
-        try {
-            String     xPath      = "//td[text()='Steps To Reproduce' and @class='category']";
-            WebElement strTitle   = driver.findElement(By.xpath(xPath));
-            WebElement strElement = strTitle.findElement(By.xpath("./following-sibling::td"));
-            return strElement.getText();
-        } catch (NoSuchElementException e) {
-            System.err.println(e.getClass().getSimpleName() + " : No steps to reproduce.");
-            return null;
-        }
-    }
-    
-    private String extractAdditionalInformation (WebDriver driver) {
-        try {
-            WebElement aiTitle =
-                driver.findElement(By.xpath("//td[text()='Additional Information' and " + "@class" + "='category']"));
-            WebElement strElement = aiTitle.findElement(By.xpath("./following-sibling::td"));
-            return strElement.getText();
-        } catch (NoSuchElementException e) {
-            System.err.println(e.getClass().getSimpleName() + " : No additional information.");
-            return null;
-        }
     }
     
     private int getTotalIssues (WebDriver driver) {
