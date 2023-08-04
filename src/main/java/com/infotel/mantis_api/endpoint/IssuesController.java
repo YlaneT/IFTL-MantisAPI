@@ -30,8 +30,7 @@ public class IssuesController {
         try {
             if (select == null) {
                 return service.searchIssue(id);
-            }
-            else {
+            } else {
                 List<String> selectValues = Arrays.asList(select.split(","));
                 return service.searchIssue(id, selectValues);
             }
@@ -84,6 +83,7 @@ public class IssuesController {
     @ResponseStatus(HttpStatus.CREATED)
     public String createIssue (@RequestBody Issue issue) {
         log.info("ENDPOINT Create issue");
+        String project               = issue.getProject();
         String category              = issue.getCategory();
         String reproducibility       = issue.getReproducibility();
         String severity              = issue.getSeverity();
@@ -98,11 +98,18 @@ public class IssuesController {
         String additionalInformation = issue.getAdditionalInformation();
         
         try {
-            return service.createIssue(category, reproducibility, severity, priority, platform,
+            return service.createIssue(project, category, reproducibility, severity, priority, platform,
                 os, osVersion, assigned, summary, description, stepsToReproduce, additionalInformation);
         } catch (FieldNotFoundException e) {
             log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (AccessDenied e) {
+            log.warn(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage());
+        } catch (ProjectNotFoundException e) {
+            // FIXME: Error code
+            log.error(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.I_AM_A_TEAPOT, e.getMessage());
         }
     }
     

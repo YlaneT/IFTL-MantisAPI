@@ -68,7 +68,8 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, FieldNotFoundException, AccessDenied {
+    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException,
+        FieldNotFoundException, AccessDenied {
         WebDriver driver = auth.login();
         Issue     issue  = new Issue();
         
@@ -391,14 +392,52 @@ public class IssuesServiceImpl implements IssuesService {
     
     @Override
     public String createIssue (
+        String project,
         String category, String reproducibility, String severity,
         String priority, String platform, String os,
         String osVersion, String assigned, String summary, String description,
         String stepsToReproduce, String additionalInformation
-    ) throws FieldNotFoundException {
+    ) throws FieldNotFoundException, AccessDenied, ProjectNotFoundException {
         
         WebDriver driver = auth.login();
+        
         driver.get(baseUrl + "/bug_report_page.php");
+        
+        /* CHOOSE PROJECT */
+        try {
+            String xPath            = "//body/div/form[@action='set_project.php']";
+            Select setProjectSelect = new Select(driver.findElement(By.xpath(xPath)));
+            try {
+                setProjectSelect.selectByVisibleText(project);
+            } catch (NoSuchElementException e) {
+                driver.quit();
+                throw new FieldNotFoundException("Project \"%s\" was not found".formatted(project));
+            }
+        } catch (NoSuchElementException e) {
+            try {
+                // Chercher le select en haut à droite
+                Select setProject2 = new Select(driver.findElement(By.name("project_id")));
+                try {
+                    setProject2.selectByVisibleText(project);
+                } catch (NoSuchElementException ex) {
+                    driver.quit();
+                    throw new FieldNotFoundException("Project \"%s\" was not found".formatted(project));
+                }
+            } catch (NoSuchElementException ex) {
+                driver.quit();
+                // FIXME in case a user doesn't have a project or only one
+                // The server can't get the project of the issue that is being created
+                throw new ProjectNotFoundException("Project of created issue is ambiguous");
+            }
+        }
+        
+        
+        // TODO: May have access denied
+        try {
+            driver.findElement(By.xpath("//body/center/p[text()='Access Denied.']"));
+            driver.quit();
+            throw new AccessDenied("User doesn't have permission to view this issue.");
+        } catch (NoSuchElementException ignore) {}
         
         WebElement dropdownCat = driver.findElement(By.name("category_id"));
         Select     dropDown    = new Select(dropdownCat);

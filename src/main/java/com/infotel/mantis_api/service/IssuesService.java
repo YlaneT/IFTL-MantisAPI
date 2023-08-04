@@ -20,8 +20,8 @@ public interface IssuesService {
     void addNote(int id, String note);
 
     // Create an issue
-    String createIssue (String category, String reproducibility, String severity,
+    String createIssue (String project, String category, String reproducibility, String severity,
         String priority, String platform, String os,
         String osVersion, String assigned, String summary, String description,
-        String stepsToReproduce, String additionalInformation) throws FieldNotFoundException;
+        String stepsToReproduce, String additionalInformation) throws FieldNotFoundException, AccessDenied, ProjectNotFoundException;
 }
