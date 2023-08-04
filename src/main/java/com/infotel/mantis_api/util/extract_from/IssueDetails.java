@@ -132,9 +132,9 @@ public class IssueDetails {
         List<String> tags             = new ArrayList<>();
         if (!tagsValueElement.getText().equals("No tags attached.")) {
             // Extract links containing text, not delete cross
-            List<WebElement> links = tagsValueElement.findElements(By.cssSelector("a"));
-            for(int i = 0 ; i < links.size() ; i += 2) {
-                tags.add(links.get(i).getText());
+            List<WebElement> links = tagsValueElement.findElements(By.xpath("a[text()]"));
+            for(WebElement link : links) {
+                tags.add(link.getText());
             }
         }
         return tags;

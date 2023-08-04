@@ -36,11 +36,17 @@ public class IssuesServiceImpl implements IssuesService {
     private String baseUrl;
     
     @Override
-    public Issue searchIssue (int id) throws IssueNotFoundException {
+    public Issue searchIssue (int id) throws IssueNotFoundException, AccessDenied {
         WebDriver driver = auth.login();
         Issue     issue  = new Issue();
         
         driver.get(baseUrl + "/view.php?id=" + id);
+        
+        try {
+            driver.findElement(By.xpath("//body/center/p[text()='Access Denied.']"));
+            driver.quit();
+            throw new AccessDenied("User doesn't have permission to view this issue.");
+        } catch (NoSuchElementException ignore) {}
         
         try {
             Thread.sleep(1500);
@@ -62,11 +68,17 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, FieldNotFoundException {
+    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, FieldNotFoundException, AccessDenied {
         WebDriver driver = auth.login();
         Issue     issue  = new Issue();
         
         driver.get(baseUrl + "/view.php?id=" + id);
+        
+        try {
+            driver.findElement(By.xpath("//body/center/p[text()='Access Denied.']"));
+            driver.quit();
+            throw new AccessDenied("User doesn't have permission to view this issue.");
+        } catch (NoSuchElementException ignore) {}
         
         Map<String, Runnable> issueTab = Map.ofEntries(
             Map.entry("id", () -> issue.setId(IssueDetails.extractId(driver))),
@@ -209,7 +221,7 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public String editIssue (Issue issue) throws IssueNotFoundException {
+    public String editIssue (Issue issue) throws IssueNotFoundException, AccessDenied {
         if (issue.getId() == null) {
             throw new IssueNotFoundException("Issue id is null");
         }

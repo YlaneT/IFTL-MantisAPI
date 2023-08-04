@@ -7,14 +7,14 @@ import java.util.List;
 
 public interface IssuesService {
     // Get an issue
-    Issue searchIssue (int id) throws IssueNotFoundException;
-    Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, FieldNotFoundException;
+    Issue searchIssue (int id) throws IssueNotFoundException, AccessDenied;
+    Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException, FieldNotFoundException, AccessDenied;
     
     // Get all issues
     List<Issue> searchAllIssues (int pageSize, int page, List<String> selectValues, int projectId) throws FieldNotFoundException, ProjectNotFoundException;
     
     // Edit issue
-    String editIssue (Issue issue) throws IssueNotFoundException;
+    String editIssue (Issue issue) throws IssueNotFoundException, AccessDenied;
     
     // Add note to issue
     void addNote(int id, String note);

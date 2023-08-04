@@ -41,6 +41,9 @@ public class IssuesController {
         } catch (FieldNotFoundException e) {
             log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (AccessDenied e) {
+            log.warn(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage());
         }
     }
     
@@ -71,6 +74,9 @@ public class IssuesController {
         } catch (IssueNotFoundException | ClassCastException e) {
             log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (AccessDenied e) {
+            log.warn(e.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage());
         }
     }
     
