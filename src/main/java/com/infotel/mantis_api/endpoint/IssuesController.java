@@ -100,13 +100,13 @@ public class IssuesController {
         try {
             return service.createIssue(project, category, reproducibility, severity, priority, platform,
                 os, osVersion, assigned, summary, description, stepsToReproduce, additionalInformation);
-        } catch (FieldNotFoundException e) {
+        } catch (FieldNotFoundException | ProjectNotFoundException e) {
             log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (AccessDenied e) {
             log.warn(e.getMessage());
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, e.getMessage());
-        } catch (ProjectNotFoundException e) {
+        } catch (AmbiguousProjectException e) {
             // FIXME: Error code
             log.error(e.getMessage());
             throw new ResponseStatusException(HttpStatus.I_AM_A_TEAPOT, e.getMessage());

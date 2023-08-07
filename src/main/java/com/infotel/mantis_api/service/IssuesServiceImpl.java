@@ -68,8 +68,8 @@ public class IssuesServiceImpl implements IssuesService {
     }
     
     @Override
-    public Issue searchIssue (int id, List<String> selectValues) throws IssueNotFoundException,
-        FieldNotFoundException, AccessDenied {
+    public Issue searchIssue (int id, List<String> selectValues)
+        throws IssueNotFoundException, FieldNotFoundException, AccessDenied {
         WebDriver driver = auth.login();
         Issue     issue  = new Issue();
         
@@ -392,52 +392,67 @@ public class IssuesServiceImpl implements IssuesService {
     
     @Override
     public String createIssue (
-        String project,
-        String category, String reproducibility, String severity,
-        String priority, String platform, String os,
-        String osVersion, String assigned, String summary, String description,
-        String stepsToReproduce, String additionalInformation
-    ) throws FieldNotFoundException, AccessDenied, ProjectNotFoundException {
+        String project, String category, String reproducibility, String severity, String priority, String platform,
+        String os, String osVersion, String assigned, String summary, String description, String stepsToReproduce,
+        String additionalInformation
+    ) throws FieldNotFoundException, AccessDenied, ProjectNotFoundException, AmbiguousProjectException {
+        
+        if (project == null || project.isEmpty() || category == null || summary == null || description == null) {
+            String message = "project, category, summary or description was not found";
+            log.warn(message);
+            throw new FieldNotFoundException(message);
+        }
         
         WebDriver driver = auth.login();
         
         driver.get(baseUrl + "/bug_report_page.php");
         
-        /* CHOOSE PROJECT */
+        // Check if access denied
         try {
-            String xPath            = "//body/div/form[@action='set_project.php']";
-            Select setProjectSelect = new Select(driver.findElement(By.xpath(xPath)));
-            try {
-                setProjectSelect.selectByVisibleText(project);
-            } catch (NoSuchElementException e) {
-                driver.quit();
-                throw new FieldNotFoundException("Project \"%s\" was not found".formatted(project));
-            }
+            driver.findElement(By.xpath("//body/center/p[text()='Access Denied.']"));
+            driver.quit();
+            String message = "User doesn't have permission to create an issue.";
+            log.warn(message);
+            throw new AccessDenied(message);
+        } catch (NoSuchElementException ignore) {}
+        
+        // Check if popup
+        try {
+            String xPath = "//body/div/form[@action='set_project.php']";
+            WebElement form = driver.findElement(By.xpath(xPath));
+            
+            Select setProjectSelect = new Select(form.findElement(By.name("project_id")));
+            setProjectSelect.selectByVisibleText(project);
+            driver.findElement(By.xpath("//input[@value='Select Project']")).click();
         } catch (NoSuchElementException e) {
-            try {
-                // Chercher le select en haut à droite
-                Select setProject2 = new Select(driver.findElement(By.name("project_id")));
+            // If not popup: check for project_id
+            WebElement inputOrSelect = driver.findElement(By.name("project_id"));
+            if (inputOrSelect.getAttribute("type").equals("hidden")) {
+                // If hidden: Project not found
+                String message = "Project of created issue is ambiguous";
+                log.warn(message);
+                throw new AmbiguousProjectException(message);
+            } else {
                 try {
-                    setProject2.selectByVisibleText(project);
+                    Select selectProject = new Select(inputOrSelect);
+                    selectProject.selectByVisibleText(project);
                 } catch (NoSuchElementException ex) {
                     driver.quit();
-                    throw new FieldNotFoundException("Project \"%s\" was not found".formatted(project));
+                    String message = "Project \"%s\" was not found".formatted(project);
+                    log.warn(message);
+                    throw new ProjectNotFoundException(message);
                 }
-            } catch (NoSuchElementException ex) {
-                driver.quit();
-                // FIXME in case a user doesn't have a project or only one
-                // The server can't get the project of the issue that is being created
-                throw new ProjectNotFoundException("Project of created issue is ambiguous");
             }
         }
         
         
-        // TODO: May have access denied
+        // Check if access denied
         try {
             driver.findElement(By.xpath("//body/center/p[text()='Access Denied.']"));
             driver.quit();
-            throw new AccessDenied("User doesn't have permission to view this issue.");
+            throw new AccessDenied("User doesn't have permission to create an issue for this project.");
         } catch (NoSuchElementException ignore) {}
+        
         
         WebElement dropdownCat = driver.findElement(By.name("category_id"));
         Select     dropDown    = new Select(dropdownCat);
@@ -446,7 +461,7 @@ public class IssuesServiceImpl implements IssuesService {
         List<String> errors        = new ArrayList<>();
         
         try {
-            if (category == null || category.isEmpty()) {
+            if (category.isEmpty()) {
                 driver.quit();
                 throw new FieldNotFoundException("Category is empty");
             }
@@ -533,35 +548,30 @@ public class IssuesServiceImpl implements IssuesService {
             }
         }
         
-        if (summary != null && !summary.isEmpty()) {
-            if (summary.length() > MAX_SUMMARY_LENGTH) {
-                String e_msg = "Summary too long (max " + MAX_SUMMARY_LENGTH + " characters)";
-                errors.add(e_msg);
-                log.warn(e_msg);
-            }
-            editSummary(driver, verifyInput(summary, MAX_SUMMARY_LENGTH));
-        } else {
+        if (summary.isEmpty()) {
             driver.quit();
             throw new FieldNotFoundException("Summary empty or not found");
         }
         
+        if (summary.length() > MAX_SUMMARY_LENGTH) {
+            String e_msg = "Summary too long (max " + MAX_SUMMARY_LENGTH + " characters)";
+            errors.add(e_msg);
+            log.warn(e_msg);
+        }
+        editSummary(driver, verifyInput(summary, MAX_SUMMARY_LENGTH));
         
-        WebElement descriptionField = driver.findElement(By.name("description"));
-        
-        if (description != null && !description.isEmpty()) {
-            descriptionField.sendKeys(description);
-        } else {
+        if (description.isEmpty()) {
             driver.quit();
             throw new FieldNotFoundException("Description empty or not found");
         }
+        driver.findElement(By.name("description")).sendKeys(description);
         
         if (stepsToReproduce != null && !stepsToReproduce.isEmpty()) {
             editStepsToReproduce(driver, stepsToReproduce);
         }
         
-        WebElement additionalField = driver.findElement(By.name("additional_info"));
         if (additionalInformation != null && !additionalInformation.isEmpty()) {
-            additionalField.sendKeys(additionalInformation);
+            driver.findElement(By.name("additional_info")).sendKeys(additionalInformation);
         }
         
         driver.findElement(By.xpath("//input[@value='Submit Report']")).click();

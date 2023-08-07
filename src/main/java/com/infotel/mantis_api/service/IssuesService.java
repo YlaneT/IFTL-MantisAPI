@@ -17,11 +17,12 @@ public interface IssuesService {
     String editIssue (int id, Issue issue) throws IssueNotFoundException, AccessDenied;
     
     // Add note to issue
-    void addNote(int id, String note);
-
+    void addNote (int id, String note);
+    
     // Create an issue
-    String createIssue (String project, String category, String reproducibility, String severity,
-        String priority, String platform, String os,
-        String osVersion, String assigned, String summary, String description,
-        String stepsToReproduce, String additionalInformation) throws FieldNotFoundException, AccessDenied, ProjectNotFoundException;
+    String createIssue (
+        String project, String category, String reproducibility, String severity, String priority, String platform,
+        String os, String osVersion, String assigned, String summary, String description, String stepsToReproduce,
+        String additionalInformation
+    ) throws FieldNotFoundException, AccessDenied, ProjectNotFoundException, AmbiguousProjectException;
 }
