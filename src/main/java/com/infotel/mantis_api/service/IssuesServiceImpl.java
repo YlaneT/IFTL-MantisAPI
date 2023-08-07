@@ -238,6 +238,17 @@ public class IssuesServiceImpl implements IssuesService {
         driver.get(baseUrl + "/view.php?id=" + issue_id);
         // View permissions already verified from using searchIssue()
         
+        // Edit tags
+        if (issue.getTags().size() != 0) {
+            try {
+                addTags(driver, (ArrayList<String>) issue.getTags()) ;
+            } catch (NoSuchElementException e) {
+                throw new AccessDenied("User doesn't have permission to edit this issue.");
+            }
+            returnMessage = "Tags were edited.";
+            log.info(returnMessage);
+        }
+        
         Class<? extends Issue> clazz  = issue.getClass();
         Field[]                fields = clazz.getDeclaredFields();
         
@@ -245,7 +256,8 @@ public class IssuesServiceImpl implements IssuesService {
             extractEditButton(driver).click();
         } catch (NoSuchElementException e) {
             driver.quit();
-            throw new AccessDenied("User doesn't have permission to edit issue.");
+            if (returnMessage.isBlank()) throw new AccessDenied("User doesn't have permission to edit issue.");
+            throw new AccessDenied(returnMessage + " User doesn't have permission to edit other fields.");
         }
         
         try {
@@ -257,7 +269,8 @@ public class IssuesServiceImpl implements IssuesService {
                         "severity", "reproducibility", "status", "resolution", "platform", "os", "osVersion", "summary",
                         "description", "stepsToReproduce", "additionalInformation", "customFields");
                     if (editable.contains(fieldName)) {
-                        String content = fieldName.equals("customFields") ? "" : (String) field.get(issue);
+                        List<String> unCastable = Arrays.asList("customFields", "tags");
+                        String content = unCastable.contains(fieldName) ? "" : (String) field.get(issue);
                         switch (fieldName) {
                             case "category" -> {
                                 try {
@@ -386,11 +399,19 @@ public class IssuesServiceImpl implements IssuesService {
         
         extractUpdateButton(driver).click();
         
+
+        
         driver.quit();
         if (!errors.isEmpty()) {
             returnMessage = returnMessage + " with errors: " + String.join(", ", errors);
         }
         return returnMessage;
+    }
+    
+    private void addTags (WebDriver driver, ArrayList<String> content) {
+        // FIXME : /!\ creates tags if they don't exist already
+        driver.findElement(By.id("tag_string")).sendKeys(String.join(",", content));
+        driver.findElement(By.xpath("//input[@value='Attach']")).click();
     }
     
     @Override
