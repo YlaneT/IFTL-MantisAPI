@@ -149,6 +149,7 @@ public class IssuesServiceImpl implements IssuesService {
         
         driver.get(baseUrl + "/view_all_bug_page.php");
         
+        // Select project
         String projectName;
         try {
             projectName = displayFilteredProjectIssues(driver, pageSize, page, projectId);
@@ -647,17 +648,33 @@ public class IssuesServiceImpl implements IssuesService {
         try {
             selectProjectElement = driver.findElement(By.name("project_id"));
         } catch (NoSuchElementException e) {
-            log.warn("No project found");
-            return null;
+            driver.findElement(By.xpath("//a[text()='Advanced Filters']")).click();
+            driver.findElement(By.id("project_id_filter")).click();
+            WebElement selectPjtTd = driver.findElement(By.id("project_id_filter_target"));
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ie) {
+                driver.quit();
+                throw new RuntimeException(ie);
+            }
+            selectProjectElement = selectPjtTd.findElement(By.xpath("//select"));
         }
         
         Select selectProject = new Select(selectProjectElement);
+        String projectName = null;
+        if (projectFilter != 0) {
+        List<WebElement> options = selectProject.getOptions();
+            for( WebElement opt : options) {
+                if (opt.getAttribute("value").equals(String.valueOf(projectFilter))) {
+                    projectName = opt.getText();
+                    break;
+                }
+            }
+        }
         
         try {
             selectProject.selectByValue(String.valueOf(projectFilter));
-            selectProjectElement = driver.findElement(By.name("project_id"));
-            selectProject = new Select(selectProjectElement);
-            return projectFilter != 0 ? selectProject.getFirstSelectedOption().getText() : null;
+            return projectName;
         } catch (NoSuchElementException e) {
             driver.quit();
             throw new ProjectNotFoundException("Project with id " + projectFilter + " not found");
