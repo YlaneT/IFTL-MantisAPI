@@ -164,57 +164,59 @@ public class IssuesServiceImpl implements IssuesService {
         
         for(int i = 3 ; i < issueRows.size() - 1 ; i++) {
             WebElement issueRow = issueRows.get(i);
-            
-            if (selectValues.size() == 0) {
-                issues.add(IssueRecap.extractAndSetFullRecap(issueRow, projectName));
-            } else {
-                List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
+            if (issueRow.findElements(By.tagName("td")).size() != 1) {
                 
-                Issue issue = new Issue();
-                issue.setProject(projectName);
-                int fields = 0;
-                if (selectValues.contains("id")) {
-                    IssueRecap.extractAndSetId(issue, issueCol);
-                    fields++;
+                if (selectValues.size() == 0) {
+                    issues.add(IssueRecap.extractAndSetFullRecap(issueRow, projectName));
+                } else {
+                    List<WebElement> issueCol = issueRow.findElements(By.tagName("td"));
+                    
+                    Issue issue = new Issue();
+                    issue.setProject(projectName);
+                    int fields = 0;
+                    if (selectValues.contains("id")) {
+                        IssueRecap.extractAndSetId(issue, issueCol);
+                        fields++;
+                    }
+                    if (selectValues.contains("priority")) {
+                        IssueRecap.extractAndSetPriority(issue, issueCol);
+                        fields++;
+                    }
+                    if (selectValues.contains("note count")) {
+                        IssueRecap.extractAndSetNoteCount(issue, issueCol);
+                        fields++;
+                    }
+                    if (selectValues.contains("attachment count")) {
+                        IssueRecap.extractAndSetAttachmentCount(issue, issueCol);
+                        fields++;
+                    }
+                    if (selectValues.contains("category")) {
+                        IssueRecap.extractAndSetCategory(issue, issueCol);
+                        fields++;
+                    }
+                    if (selectValues.contains("severity")) {
+                        IssueRecap.extractAndSetSeverity(issue, issueCol);
+                        fields++;
+                    }
+                    if (selectValues.contains("status")) {
+                        IssueRecap.extractAndSetStatus(issue, issueCol);
+                        fields++;
+                    }
+                    if (selectValues.contains("updated")) {
+                        IssueRecap.extractAndSetLastUpdated(issue, issueCol);
+                        fields++;
+                    }
+                    if (selectValues.contains("summary")) {
+                        IssueRecap.extractAndSetSummary(issue, issueCol);
+                        fields++;
+                    }
+                    
+                    if (fields == 0 && projectName == null) {
+                        driver.quit();
+                        throw new FieldNotFoundException("Field(s) " + String.join(", ", selectValues) + " not found");
+                    }
+                    issues.add(issue);
                 }
-                if (selectValues.contains("priority")) {
-                    IssueRecap.extractAndSetPriority(issue, issueCol);
-                    fields++;
-                }
-                if (selectValues.contains("note count")) {
-                    IssueRecap.extractAndSetNoteCount(issue, issueCol);
-                    fields++;
-                }
-                if (selectValues.contains("attachment count")) {
-                    IssueRecap.extractAndSetAttachmentCount(issue, issueCol);
-                    fields++;
-                }
-                if (selectValues.contains("category")) {
-                    IssueRecap.extractAndSetCategory(issue, issueCol);
-                    fields++;
-                }
-                if (selectValues.contains("severity")) {
-                    IssueRecap.extractAndSetSeverity(issue, issueCol);
-                    fields++;
-                }
-                if (selectValues.contains("status")) {
-                    IssueRecap.extractAndSetStatus(issue, issueCol);
-                    fields++;
-                }
-                if (selectValues.contains("updated")) {
-                    IssueRecap.extractAndSetLastUpdated(issue, issueCol);
-                    fields++;
-                }
-                if (selectValues.contains("summary")) {
-                    IssueRecap.extractAndSetSummary(issue, issueCol);
-                    fields++;
-                }
-                
-                if (fields == 0 && projectName == null) {
-                    driver.quit();
-                    throw new FieldNotFoundException("Field(s) " + String.join(", ", selectValues) + " not found");
-                }
-                issues.add(issue);
             }
         }
         
@@ -419,8 +421,8 @@ public class IssuesServiceImpl implements IssuesService {
         
         // Check if popup
         try {
-            String xPath = "//body/div/form[@action='set_project.php']";
-            WebElement form = driver.findElement(By.xpath(xPath));
+            String     xPath = "//body/div/form[@action='set_project.php']";
+            WebElement form  = driver.findElement(By.xpath(xPath));
             
             Select setProjectSelect = new Select(form.findElement(By.name("project_id")));
             setProjectSelect.selectByVisibleText(project);
@@ -661,10 +663,10 @@ public class IssuesServiceImpl implements IssuesService {
         }
         
         Select selectProject = new Select(selectProjectElement);
-        String projectName = null;
+        String projectName   = null;
         if (projectFilter != 0) {
-        List<WebElement> options = selectProject.getOptions();
-            for( WebElement opt : options) {
+            List<WebElement> options = selectProject.getOptions();
+            for(WebElement opt : options) {
                 if (opt.getAttribute("value").equals(String.valueOf(projectFilter))) {
                     projectName = opt.getText();
                     break;
