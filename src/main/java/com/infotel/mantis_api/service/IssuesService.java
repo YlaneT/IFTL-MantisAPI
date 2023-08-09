@@ -1,6 +1,9 @@
 package com.infotel.mantis_api.service;
 
-import com.infotel.mantis_api.exception.*;
+import com.infotel.mantis_api.exception.AccessDenied;
+import com.infotel.mantis_api.exception.FieldNotFoundException;
+import com.infotel.mantis_api.exception.IssueNotFoundException;
+import com.infotel.mantis_api.exception.ProjectNotFoundException;
 import com.infotel.mantis_api.model.Issue;
 
 import java.util.List;
@@ -23,5 +26,5 @@ public interface IssuesService {
     String createIssue (String category, String reproducibility, String severity,
         String priority, String platform, String os,
         String osVersion, String assigned, String summary, String description,
-        String stepsToReproduce, String additionalInformation) throws FieldNotFoundException;
+        String stepsToReproduce, String additionalInformation) throws FieldNotFoundException, AccessDenied;
 }

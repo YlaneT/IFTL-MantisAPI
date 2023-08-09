@@ -383,7 +383,7 @@ public class IssuesServiceImpl implements IssuesService {
         String priority, String platform, String os,
         String osVersion, String assigned, String summary, String description,
         String stepsToReproduce, String additionalInformation
-    ) throws FieldNotFoundException {
+    ) throws FieldNotFoundException, AccessDenied {
         
         WebDriver driver = auth.login();
         driver.get(baseUrl + "/bug_report_page.php");
@@ -393,7 +393,14 @@ public class IssuesServiceImpl implements IssuesService {
         
         String       returnMessage = "Issue was created";
         List<String> errors        = new ArrayList<>();
-        
+
+        try {
+            WebElement accessField = driver.findElement(By.xpath("//body/center/p[text() ='Access Denied.']"));
+            driver.quit();
+            throw new AccessDenied("Acces Denied");
+        } catch (NoSuchElementException ignore) {}
+
+
         try {
             if (category == null || category.isEmpty()) {
                 driver.quit();
@@ -404,7 +411,7 @@ public class IssuesServiceImpl implements IssuesService {
             driver.quit();
             throw new FieldNotFoundException("Category \"%s\" doesn't exist".formatted(category));
         }
-        
+
         WebElement drpReproducibility = driver.findElement(By.name("reproducibility"));
         Select     dropdown           = new Select(drpReproducibility);
         
